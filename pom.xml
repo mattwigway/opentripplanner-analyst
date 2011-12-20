@@ -57,6 +57,11 @@
 			</snapshots>
 			<url>http://repo.opengeo.org/</url>
 		</repository>
+        <repository>
+            <id>osgeo</id>
+            <name>Open Source Geospatial Foundation Repository</name>
+            <url>http://download.osgeo.org/webdav/geotools/</url>
+        </repository>
 	</repositories>
 
 	<dependencyManagement>
@@ -90,8 +95,8 @@
 	</dependencyManagement>
 
 	<properties>
-		<opentripplanner.version>0.4.3</opentripplanner.version>
-		<geotools.version>2.7.1</geotools.version>
+		<opentripplanner.version>0.4.4-SNAPSHOT</opentripplanner.version>
+		<geotools.version>8.0-M4</geotools.version>
 		<spring.version>3.0.5.RELEASE</spring.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>

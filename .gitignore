@@ -1,0 +1,6 @@
+opentripplanner-analyst-core/bin/
+target/
+*~
+.classpath
+.project
+.settings
