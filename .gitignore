@@ -1,5 +1,4 @@
-opentripplanner-analyst-core/bin/
-target/
+opentripplanner-analyst-core/target/
 *~
 .classpath
 .project
