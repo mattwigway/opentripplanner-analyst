@@ -5,11 +5,20 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.awt.image.DataBufferInt;
 import java.awt.image.IndexColorModel;
+import java.awt.image.RenderedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import org.geotools.coverage.grid.GridCoverage2D;
+import org.geotools.coverage.grid.GridCoverageFactory;
+import org.geotools.coverage.grid.GridEnvelope2D;
+import org.geotools.coverage.grid.GridGeometry2D;
+import org.geotools.geometry.Envelope2D;
+import org.geotools.referencing.crs.DefaultGeographicCRS;
+import org.opengis.coverage.grid.GridEnvelope;
+import org.opengis.geometry.Envelope;
 import org.opentripplanner.common.IterableLibrary;
 import org.opentripplanner.common.geometry.HashGrid;
 import org.opentripplanner.routing.core.State;
@@ -22,11 +31,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Envelope;
 
 public class VertexRaster {
 
-    /* STATIK */
+    /* STATIC */
     private static final Logger LOG = LoggerFactory.getLogger(VertexRaster.class);
 
     private static Graph graph;
@@ -34,17 +42,19 @@ public class VertexRaster {
     private static double minLon, minLat, maxLon, maxLat, avgLon, avgLat;
     private static double widthMeters,  heightMeters;
     private static double widthDegrees, heightDegrees;
+    private static final IndexColorModel DEFAULT_COLOR_MAP = getDefaultColorMap();
     
     /* INSTANCE */
-    double resolutionMeters;
-    double lonPitch, latPitch;
-    int widthPixels, heightPixels;
+    final double resolutionMeters;
+    final double lonPitch, latPitch;
+    final int widthPixels, heightPixels;
     List<Sample> samples = new ArrayList<Sample>();
+    final BufferedImage image;
     
-    // should really be handled by a VertexRasterFactory not global state
+    // this should really be handled by graph-specific VertexRasterFactories not global state
     public static void setGraph(Graph g) {
         graph = g;
-        Envelope env = graph.getExtent();
+        com.vividsolutions.jts.geom.Envelope env = graph.getExtent();
         minLon = env.getMinX();
         maxLon = env.getMaxX();
         avgLon = (minLon + maxLon) / 2;
@@ -89,48 +99,12 @@ public class VertexRaster {
         samples.trimToSize();
         this.samples = samples;
         LOG.debug("finished preparing raster.");
-    }
-
-    public BufferedImage getImage(ShortestPathTree spt) {
-        int alpha = 180;
-        alpha <<= 24;
-        BufferedImage image = new BufferedImage(widthPixels, heightPixels, BufferedImage.TYPE_INT_ARGB);
-        int[] imagePixelData = ((DataBufferInt)image.getRaster().getDataBuffer()).getData();
-        // java bytes are signed and 32 bits long anyway, use ints w range checking
-        int red, green, blue;
-        LOG.debug("filling in image...");
-        for (Sample s : samples) {
-            State state = spt.getState(s.vertex);
-            if (state == null)
-                continue;
-            long minutes = (state.getElapsedTime() + s.time) / 60;
-            if (minutes > 120)
-                continue;
-            int subMinutes = 30 - (int) (minutes % 30);
-            red = green = blue = 0;
-            if (minutes < 30) {
-                green = subMinutes * 8;
-            } else if (minutes < 60) {
-                blue = subMinutes * 8;
-            } else if (minutes < 90) {
-                red = subMinutes * 8;
-            } else if (minutes < 120) {
-                red  = subMinutes * 8;
-                blue = subMinutes * 8;
-            } else {
-                blue  = 150;
-                green = 150;
-            }
-            int index = s.x + s.y * widthPixels;
-            imagePixelData[index] = alpha | red << 16 | green << 8 | blue;
-        }
-        LOG.debug("finished filling in image.");
-        return image;
+        // reusable image object so gridcoverages etc can track updates
+        image = new BufferedImage(widthPixels, heightPixels, 
+                    BufferedImage.TYPE_BYTE_INDEXED, DEFAULT_COLOR_MAP);
     }
     
-    public BufferedImage getImageIndexed(ShortestPathTree spt) {
-        BufferedImage image = new BufferedImage(widthPixels, heightPixels, 
-                BufferedImage.TYPE_BYTE_INDEXED, defaultColorMap());
+    public void generateImage(ShortestPathTree spt) {
         byte[] imagePixelData = ((DataBufferByte)image.getRaster().getDataBuffer()).getData();
         Arrays.fill(imagePixelData, (byte)255);
         LOG.debug("filling in image...");
@@ -139,15 +113,12 @@ public class VertexRaster {
             if (state == null)
                 continue;
             long minutes = (state.getElapsedTime() + s.time) / 60;
-            if (minutes > 255)
-                minutes = 255;
-            if (minutes > 120)
+            if (minutes >= 150)
                 continue;
             int index = s.x + s.y * widthPixels;
             imagePixelData[index] = (byte) minutes;
         }
         LOG.debug("finished filling in image.");
-        return image;
     }
 
     class Sample {
@@ -161,23 +132,18 @@ public class VertexRaster {
         }
     }
 
-    private IndexColorModel defaultColorMap() {
+    private static IndexColorModel getDefaultColorMap() {
         byte[] r = new byte[256];
         byte[] g = new byte[256];
         byte[] b = new byte[256];
         byte[] a = new byte[256];
         for (int i=0; i<30; i++) {
-            // 0-30 green
-            g[i + 00] = 
-            // > 30 blue
-            b[i + 30] =
-            // > 60 yellow
-            g[i + 60] = 
+            g[i + 00] =  // <  30 green 
+            b[i + 30] =  // >= 30 blue
+            g[i + 60] =  // >= 60 yellow 
             r[i + 60] =
-            // > 90 red
-            r[i + 90] =
-            // >120 pink
-            b[i + 120] =
+            r[i + 90] =  // >= 90 red
+            b[i + 120] = // >=120 pink
             r[i + 120] = (byte) ((30 - i) * 8);
         }
         // alpha channel
@@ -187,4 +153,19 @@ public class VertexRaster {
         return new IndexColorModel(8, 256, r, g, b, a);
     }
 
+    public GridCoverage2D getGridCoverage2D() {
+        com.vividsolutions.jts.geom.Envelope graphEnvelope = graph.getExtent();
+        Envelope graphRange = new Envelope2D(DefaultGeographicCRS.WGS84, 
+                graphEnvelope.getMinX(),  graphEnvelope.getMinY(), 
+                graphEnvelope.getWidth(), graphEnvelope.getHeight());
+        GridCoverage2D gridCoverage = new GridCoverageFactory().create(
+                (CharSequence) "name of the coverage", 
+                (RenderedImage) image, 
+                (Envelope) graphRange);
+        return gridCoverage;
+    }
+
+    public BufferedImage getBufferedImage() {
+        return image;
+    }
 }
