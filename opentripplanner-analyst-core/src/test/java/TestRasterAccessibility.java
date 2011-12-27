@@ -23,12 +23,16 @@ import org.opentripplanner.analyst.core.VertexRaster;
 import org.opentripplanner.common.IterableLibrary;
 import org.opentripplanner.common.geometry.HashGrid;
 import org.opentripplanner.routing.algorithm.GenericDijkstra;
+import org.opentripplanner.routing.algorithm.strategies.SearchTerminationStrategy;
+import org.opentripplanner.routing.algorithm.strategies.SkipTraverseResultStrategy;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.TraverseOptions;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.impl.GraphServiceImpl;
+import org.opentripplanner.routing.spt.MultiShortestPathTree;
 import org.opentripplanner.routing.spt.ShortestPathTree;
+import org.opentripplanner.routing.spt.ShortestPathTreeFactory;
 import org.opentripplanner.routing.vertextype.StreetVertex;
 
 public class TestRasterAccessibility extends TestCase {
@@ -60,8 +64,9 @@ public class TestRasterAccessibility extends TestCase {
         options.setCalendarService(graphService.getCalendarService());
         // must set calendar service before setting service days
         options.setServiceDays(tripTime);
-        options.setMaxWalkDistance(100000);
+        options.setMaxWalkDistance(3000);
         options.setTransferTable(graph.getTransferTable());
+        options.worstTime = tripTime + 60 * 150; // we don't display over 150 min
     }
         
     public void XtestImageFunction() throws Exception {
@@ -71,7 +76,7 @@ public class TestRasterAccessibility extends TestCase {
             TraverseOptions options = new TraverseOptions();
             options.setMaxWalkDistance(100000);
             // dec 10 2011 5:30pm CET
-            State initialState = new State(1323534600, vertices.get(i), options);
+            State initialState = new State(tripTime, vertices.get(i), options);
             System.out.println(initialState);
             //genericDijkstra asks for a traverseoptions, but state contains one now...
             options.setCalendarService(graphService.getCalendarService());
@@ -113,21 +118,33 @@ public class TestRasterAccessibility extends TestCase {
     public void testVertexRaster() throws Exception {
         VertexRaster raster = new VertexRaster(50);
         GridCoverage2D coverage = raster.getGridCoverage2D();
-        
+        GenericDijkstra dijkstra = new GenericDijkstra(options);
+        dijkstra.setShortestPathTreeFactory(new DijkstraOptions());
+        dijkstra.setSkipTraverseResultStrategy(new DijkstraOptions());
+
         List<Vertex> vertices = new ArrayList<Vertex>(graph.getVertices());
         Collections.shuffle(vertices);
         for (int i = 0; i<10; i++) {
             State initialState = new State(tripTime, vertices.get(i), options);
             System.out.println(initialState);
-            System.out.printf("finding spt \n");
-            ShortestPathTree spt = new GenericDijkstra(options).getShortestPathTree(initialState);
-            raster.generateImage(spt);
             
             long t0 = System.currentTimeMillis();
+            System.out.printf("calculating spt \n");
+            ShortestPathTree spt = dijkstra.getShortestPathTree(initialState);
+            long t1 = System.currentTimeMillis();
+            System.out.printf("done calculating spt %dmsec\n", (int)(t1-t0));
+
+            t0 = System.currentTimeMillis();
+            System.out.printf("generating raster \n");
+            raster.generateImage(spt);
+            t1 = System.currentTimeMillis();
+            System.out.printf("done generating raster %dmsec\n", (int)(t1-t0));
+
+            t0 = System.currentTimeMillis();
             System.out.printf("writing png \n");
             File outputfile = new File(String.format("/home/syncopate/out%d.png", i));
             ImageIO.write(raster.getBufferedImage(), "png", outputfile);
-            long t1 = System.currentTimeMillis();
+            t1 = System.currentTimeMillis();
             System.out.printf("done writing png %dmsec\n", (int)(t1-t0));
 
 //            t0 = System.currentTimeMillis();
@@ -151,4 +168,20 @@ public class TestRasterAccessibility extends TestCase {
             System.out.printf("done writing geotiff %dmsec\n", (int)(t1-t0));
         }
     }
+    
+    class DijkstraOptions implements SkipTraverseResultStrategy, ShortestPathTreeFactory {
+
+        @Override
+        public boolean shouldSkipTraversalResult(Vertex origin, Vertex target, State parent,
+                State current, ShortestPathTree spt, TraverseOptions traverseOptions) {
+            return current.getTime() > traverseOptions.worstTime;
+        }
+
+        @Override
+        public ShortestPathTree create() {
+            return new MultiShortestPathTree();
+        }
+ 
+    }
+    
 }
