@@ -68,27 +68,18 @@ public class TestRasterAccessibility extends TestCase {
         options.setTransferTable(graph.getTransferTable());
         options.worstTime = tripTime + 60 * 150; // we don't display over 150 min
     }
-        
+    
+    // disabled
     public void XtestImageFunction() throws Exception {
         List<Vertex> vertices = new ArrayList<Vertex>(graph.getVertices());
         Collections.shuffle(vertices);
-        for (int i = 0; i<3; i++) {
-            TraverseOptions options = new TraverseOptions();
-            options.setMaxWalkDistance(100000);
-            // dec 10 2011 5:30pm CET
+        for (int i = 0; i < 2; i++) { 
             State initialState = new State(tripTime, vertices.get(i), options);
             System.out.println(initialState);
-            //genericDijkstra asks for a traverseoptions, but state contains one now...
-            options.setCalendarService(graphService.getCalendarService());
-            options.setTransferTable(graph.getTransferTable());
-            // must set calendar service before setting service days
-            options.setServiceDays(initialState.getTime());
             System.out.printf("finding spt \n");
             ShortestPathTree spt = new GenericDijkstra(options).getShortestPathTree(initialState);
             System.out.printf("preparing coverage \n");
             TravelTimeImageFunction imageFunction = new TravelTimeImageFunction(hashGrid, spt);
-            //LOG.debug(hashGrid.toStringVerbose());
-            // GraphRaster gRaster = new GraphRaster(graph, resolution);
             com.vividsolutions.jts.geom.Envelope graphEnvelope = graph.getExtent();
             Envelope graphRange = new Envelope2D(DefaultGeographicCRS.WGS84, 
                     graphEnvelope.getMinX(),  graphEnvelope.getMinY(), 
@@ -102,7 +93,7 @@ public class TestRasterAccessibility extends TestCase {
                     null,
                     null);
             GeoTiffWriter writer;
-            File tiff = new File(String.format("/home/syncopate/out%d.tiff", i));
+            File tiff = new File(String.format("/home/syncopate/out%dfunc.tiff", i));
             System.out.printf("writing tiff \n");
             try {
                 writer = new GeoTiffWriter(tiff);
@@ -166,6 +157,7 @@ public class TestRasterAccessibility extends TestCase {
             }
             t1 = System.currentTimeMillis();
             System.out.printf("done writing geotiff %dmsec\n", (int)(t1-t0));
+
         }
     }
     
