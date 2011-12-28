@@ -27,13 +27,13 @@ otp.analyst.IsochroneDemo = {
     currentLocation :   null,
     reachableLayer :    null,
     maxSeriesTime :     0,
-    isoLayers :         null,
+    isoLayer :         null,
     
 
     initialize : function(config) {
         
         var thisMain = this;
-        this.isoLayers = new Array();
+        this.isoLayer = null;
            
         this.map = new OpenLayers.Map();
         var arrayOSM = ["http://otile1.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.png",
@@ -52,9 +52,8 @@ otp.analyst.IsochroneDemo = {
         this.map.addLayer(baseAerial);
         this.map.addControl(new OpenLayers.Control.LayerSwitcher());
         
-        var initLocationProj = new OpenLayers.LonLat(-77.03197, 38.994172).transform(
+        var initLocationProj = new OpenLayers.LonLat(-122.68, 45.50).transform(
                 new OpenLayers.Projection("EPSG:4326"), this.map.getProjectionObject());
-        // -122.681944, 45.52    
         console.log("map proj: "+this.map.getProjectionObject());    
         var markers = new OpenLayers.Layer.Vector(
             "Markers",
@@ -85,6 +84,7 @@ otp.analyst.IsochroneDemo = {
             thisMain.currentLocation = new OpenLayers.LonLat(marker.geometry.x, marker.geometry.y).transform(
                 thisMain.map.getProjectionObject(), new OpenLayers.Projection("EPSG:4326"));       
             thisMain.locationUpdated();
+            thisMain.isoQuery(0, false);
         };
 
         this.map.addControl(dragFeature);
@@ -211,84 +211,39 @@ otp.analyst.IsochroneDemo = {
     },
 
     isoQuery : function(maxTime, inSeries) {
-    
         var thisMain = this;
-        
-        //console.log(currentLocation.lon + ", " + currentLocation.lat + ", " + timeSlider.getValue());
-        var url = "/opentripplanner-api-webapp/ws/iso?fromLat=" + 
-                   this.currentLocation.lat + "&fromLon=" + this.currentLocation.lon + "&maxTime=" + this.timeSlider.getValue();
-        console.log("inseries="+inSeries);        
+        var url = "/opentripplanner-analyst-core/raster?fromLat=" + 
+                   this.currentLocation.lat + "&fromLon=" + 
+                   this.currentLocation.lon ;
         console.log(url);
+        var options = {   
+        		'alwaysInRange' : true,
+                'opacity': 0.2, 
+                'isBaseLayer': false,
+                numZoomLevels : 1 };
+        var newIsoLayer = new OpenLayers.Layer.Image(
+                'Isochrone',
+                url,
+                //this.map.getExtent(),
+                new OpenLayers.Bounds(-123.242146, 45.154576, -122.021497, 45.721398).transform(
+                		new OpenLayers.Projection("EPSG:4326"), this.map.getProjectionObject()),
+                new OpenLayers.Size(1904, 1260),
+                options);
         
-        Ext.Ajax.request({
-            url : '/opentripplanner-api-webapp/ws/iso',
-            method: 'GET',
-            params : {
-                'fromLat' : this.currentLocation.lat,
-                'fromLon' : this.currentLocation.lon,
-                'startDate' : '10/27/2011', //this.dateField.getValue(),
-                'startTime' : this.timeField.getValue(),
-                'usePurpleLine' : this.usePurpleLineCB.getValue(),
-                'maxTime' : maxTime*60 //this.timeSlider.getValue()*60
-            },
-            success: function ( result, request ) {
-                var geojson = new OpenLayers.Format.GeoJSON('Geometry');
-                
-                var ret = geojson.read(result.responseText);
-                //console.log(result.responseText);
-                
-                //console.log("ret arr size = "+ret.length);
-                var geom = ret[0];
-                
-                //console.log("geom="+geom.geometry);
-                /*var geom2 = geom.geometry.transform(
-                    new OpenLayers.Projection("EPSG:4326"), thisMain.map.getProjectionObject());*/
-                //console.log("geom2="+geom2);
-                
-                //if(thisMain.reachableLayer != null) thisMain.map.removeLayer(thisMain.reachableLayer);
-                
-                var colorPct = inSeries ? maxTime / (thisMain.seriesNumberSlider.getValue() * thisMain.seriesIntervalSlider.getValue()) : 0;
-                console.log("cPct="+colorPct);                
-                var styleMap = new OpenLayers.StyleMap({
-                    fillColor:   'rgb('+Math.floor(colorPct*30)+', '+Math.floor(colorPct*144)+', 205)', //'#1e90ff', 
-                    fillOpacity: 0.5,
-                    strokeWidth: 3,
-                    strokeColor: 'rgb(0,'+Math.floor(colorPct*191)+', 205)'
-                });
-                var isoLayer = new OpenLayers.Layer.Vector("Isochrone-"+maxTime, {
-                    styleMap: styleMap    
-                });
-                
-                var features = [ new OpenLayers.Feature.Vector(geom.geometry) ];
-                isoLayer.addFeatures(features);
-                
-                thisMain.map.addLayer(isoLayer);
-                thisMain.map.setLayerIndex(isoLayer, -maxTime);
-                thisMain.isoLayers.push(isoLayer);
-                
-                if(inSeries && maxTime + thisMain.seriesIntervalSlider.getValue() <= thisMain.maxSeriesTime) {
-                    thisMain.isoQuery(maxTime + thisMain.seriesIntervalSlider.getValue(), true);
-                }
-            },  // end of success function
-            failure: function ( result, request ) {
-                alert("fail " + result.responseText);
-            }
-        });
+        if (thisMain.isoLayer != null) 
+        	this.map.removeLayer(thisMain.isoLayer);
+        thisMain.map.addLayer(newIsoLayer);
+        //thisMain.map.setLayerIndex(isoLayer, -2);
+        thisMain.isoLayer = newIsoLayer;
+        console.log(this.map.getProjectionObject());
+        console.log(this.map.getExtent());
+        console.log(newIsoLayer);
     },
 
     locationUpdated : function() {
         this.locationField.setValue(this.currentLocation.lat + "," + this.currentLocation.lon);
     },
     
-    clearIsoLayers : function () {
-        for(var i = 0; i < this.isoLayers.length; i++) {
-            var layer = this.isoLayers[i];  
-            console.log("layer="+layer);
-            this.map.removeLayer(layer)
-        }
-        this.isoLayers = new Array();
-    },
-
     CLASS_NAME: "otp.analyst.IsochroneDemo"
 
 };
