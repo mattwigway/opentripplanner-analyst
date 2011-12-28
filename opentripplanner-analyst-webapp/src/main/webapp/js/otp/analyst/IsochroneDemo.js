@@ -16,18 +16,18 @@ otp.namespace("otp.analyst");
 
 otp.analyst.IsochroneDemo = {
 
-    map :               null,
-    locationField :     null,
-    dateField :         null,   
-    timeField :         null,   
-    timeSlider :        null,
+    map :                 null,
+    locationField :       null,
+    dateField :           null,   
+    timeField :           null,   
+    timeSlider :          null,
     usePurpleLineCB :     null,
-    seriesNumberSlider :   null,
-    seriesIntervalSlider:   null,
-    currentLocation :   null,
-    reachableLayer :    null,
-    maxSeriesTime :     0,
-    isoLayer :         null,
+    seriesNumberSlider :  null,
+    seriesIntervalSlider: null,
+    currentLocation :     null,
+    reachableLayer :      null,
+    maxSeriesTime :       0,
+    isoLayer :            null,
     
 
     initialize : function(config) {
@@ -60,7 +60,7 @@ otp.analyst.IsochroneDemo = {
             {
                 styleMap: new OpenLayers.StyleMap({
                     // Set the external graphic and background graphic images.
-                    externalGraphic: "js/lib/openlayers/img/marker.png",
+                    externalGraphic: "js/lib/openlayers/img/marker-green.png",
                     graphicWidth: 21,
                     graphicHeight: 25,
                     graphicXOffset: -10.5,
@@ -122,87 +122,45 @@ otp.analyst.IsochroneDemo = {
             plugins: new GeoExt.SliderTip()
         });
 
-        var runSingleButton = new Ext.Button({
+        this.runButton = new Ext.Button({
             text: "Run",
             width: 100,
             handler: function(btn, evt) {
-                thisMain.clearIsoLayers();
-                thisMain.maxSeriesTime = 0;
                 thisMain.isoQuery(thisMain.timeSlider.getValue(), false);
             }   
         });
         
-        this.seriesNumberSlider = new Ext.slider.SingleSlider({
-            fieldLabel: 'Number',
-            value: 5,
-            minValue: 1,
-            maxValue: 20,
-            plugins: new GeoExt.SliderTip()
-        });
-
-        this.seriesIntervalSlider = new Ext.slider.SingleSlider({
-            fieldLabel: 'Interval (min.)',
-            value: 15,
-            minValue: 0,
-            maxValue: 60,
-            plugins: new GeoExt.SliderTip()
-        });
+//        var singleIsoPanel =  new Ext.Panel({
+//            layout: 'form',
+//            title: 'Single Isochrone',
+//            padding: 10,
+//            items: [ this.timeSlider, runButton ],
+//            style: {
+//                marginTop: '15px'
+//            }
+//        });
         
-        var runSeriesButton = new Ext.Button({
-            text: "Run",
-            width: 100,
-            handler: function(btn, evt) {
-                thisMain.clearIsoLayers();
-                thisMain.maxSeriesTime = thisMain.seriesNumberSlider.getValue() * thisMain.seriesIntervalSlider.getValue();
-                thisMain.isoQuery(thisMain.seriesIntervalSlider.getValue(), true);
-            }   
-        });
-
-        var singleIsoPanel =  new Ext.Panel({
-            layout: 'form',
-            title: 'Single Isochrone',
-            padding: 10,
-            items: [ this.timeSlider, runSingleButton ],
-            style: {
-                marginTop: '15px'
-            }
-        });
-        
-        var isoSeriesPanel =  new Ext.Panel({
-            layout: 'form',
-            title: 'Isochrone Series',
-            padding: 10,
-            items: [ this.seriesNumberSlider, this.seriesIntervalSlider, runSeriesButton ],
-            style: {
-                marginTop: '15px'
-            }
-        });
-                            
         var controlsPanel = new Ext.Panel({
             layout: 'form',
             title: 'Controls',
             padding: 10,
             width: 300,
             region: 'west',
-            items: [ this.locationField, this.dateField, this.timeField, this.usePurpleLineCB, singleIsoPanel, isoSeriesPanel ] //this.timeSlider, runButton ]
+            items: [ this.locationField, this.dateField, this.timeField, this.timeSlider, this.runButton ] //this.usePurpleLineCB, 
         });
         
         // set up the map panel
-        
         var mapPanel = new GeoExt.MapPanel({
             map: this.map,
             title: 'Map',
             region: 'center'
         });
         
-        
         // create the viewport
-
         new Ext.Viewport({
             layout: 'border',
             items: [ controlsPanel, mapPanel]
         });
-                
                 
         this.map.setCenter(initLocationProj, 10);
         this.currentLocation = initLocationProj.transform(
@@ -218,7 +176,7 @@ otp.analyst.IsochroneDemo = {
         console.log(url);
         var options = {   
         		'alwaysInRange' : true,
-                'opacity': 0.2, 
+                'opacity': 0.4, 
                 'isBaseLayer': false,
                 numZoomLevels : 1 };
         var newIsoLayer = new OpenLayers.Layer.Image(
