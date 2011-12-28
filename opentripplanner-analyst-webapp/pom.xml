@@ -3,16 +3,16 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>opentripplanner-analyst-webapp</artifactId>
     <packaging>war</packaging>
-    <name>opentripplanner-analyst-webapp</name>
+    <name>OpenTripPlanner Analytics Webapp</name>
 
     <parent>
-        <artifactId>opentripplanner</artifactId>
+        <artifactId>opentripplanner-analyst</artifactId>
         <groupId>org.opentripplanner</groupId>
-        <version>0.4.2-SNAPSHOT</version>
+        <version>0.1-SNAPSHOT</version>
     </parent>
 
     <dependencies>
-
+	<!-- all dependencies are inherited -->
     </dependencies>
 
     <build>
@@ -21,7 +21,7 @@
             <plugin>
                 <groupId>ro.isdc.wro4j</groupId>
                 <artifactId>wro4j-maven-plugin</artifactId>
-                <version>1.3.6</version>
+                <version>1.4.2</version>
                 <executions>
                     <execution>
                             <phase>prepare-package</phase>

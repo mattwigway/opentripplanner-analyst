@@ -18,6 +18,7 @@
 
 	<modules>
 		<module>opentripplanner-analyst-core</module>
+		<module>opentripplanner-analyst-webapp</module>
 	</modules>
 
 	<dependencies>
@@ -102,6 +103,7 @@
 		<opentripplanner.version>0.4.4-SNAPSHOT</opentripplanner.version>
 		<geotools.version>8.0-M4</geotools.version>
 		<spring.version>3.0.5.RELEASE</spring.version>
+		<jersey.version>1.11</jersey.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
