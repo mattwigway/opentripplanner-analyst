@@ -65,7 +65,8 @@ public class VertexRaster {
         widthMeters   = DistanceLibrary.distance(avgLat, minLon, avgLat, maxLon);
         heightDegrees = maxLat - minLat;
         widthDegrees  = maxLon - minLon;
-        
+        System.out.printf("graph extent : %f %f %f %f \n", minLon, minLat, maxLon, maxLat);
+
         // use avglat/lon in making hashgrid
         hashGrid = new HashGrid<Vertex>(100, 400, 400);
         for (Vertex v : IterableLibrary.filter(g.getVertices(), StreetVertex.class)) {
@@ -137,17 +138,39 @@ public class VertexRaster {
         byte[] g = new byte[256];
         byte[] b = new byte[256];
         byte[] a = new byte[256];
+        Arrays.fill(a, (byte)255);
         for (int i=0; i<30; i++) {
-            g[i + 00] =  // <  30 green 
-            b[i + 30] =  // >= 30 blue
-            g[i + 60] =  // >= 60 yellow 
-            r[i + 60] =
-            r[i + 90] =  // >= 90 red
-            b[i + 120] = // >=120 pink
-            r[i + 120] = (byte) ((30 - i) * 8);
+            g[i + 00]  =  // <  30 green 
+            b[i + 30]  =  // >= 30 blue
+            g[i + 60]  =  // >= 60 yellow 
+            r[i + 60]  =
+            r[i + 90]  =  // >= 90 red
+            b[i + 120] =  // >=120 pink fading to transparent 
+            a[i + 120] =  
+            r[i + 120] = (byte) ((42 - i) * 6);
         }
-        // alpha channel
+        // 255 is transparent
+        a[255] = 0;
+        return new IndexColorModel(8, 256, r, g, b, a);
+    }
+
+    private static IndexColorModel getAlternateColorMap() {
+        byte[] r = new byte[256];
+        byte[] g = new byte[256];
+        byte[] b = new byte[256];
+        byte[] a = new byte[256];
         Arrays.fill(a, (byte)190);
+        for (int i=0; i<40; i++) {
+            byte c = (byte) ((40 - i) * 6);
+            g[i + 00]  += c; // <  30 green 
+            b[i + 30]  += c; // >= 30 blue
+            g[i + 60]  += c; // >= 60 yellow 
+            r[i + 60]  += c;
+            r[i + 90]  += c; // >= 90 red
+            b[i + 120] += c; // >=120 pink 
+            a[i + 120] += c; // fading to transparent
+            r[i + 120] += c;
+        }
         // 255 is transparent
         a[255] = 0;
         return new IndexColorModel(8, 256, r, g, b, a);
@@ -168,4 +191,9 @@ public class VertexRaster {
     public BufferedImage getBufferedImage() {
         return image;
     }
+    
+    public Vertex closestVertex(double lon, double lat, double radiusMeters) {
+        return hashGrid.closest(lon, lat, radiusMeters);
+    }
+    
 }
