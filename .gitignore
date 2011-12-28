@@ -1,4 +1,5 @@
 opentripplanner-analyst-core/target/
+opentripplanner-analyst-webapp/target/
 *~
 .classpath
 .project
