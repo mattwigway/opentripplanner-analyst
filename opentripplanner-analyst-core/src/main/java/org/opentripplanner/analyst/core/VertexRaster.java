@@ -141,10 +141,14 @@ public class VertexRaster {
         Arrays.fill(a, (byte)255);
         for (int i=0; i<30; i++) {
             g[i + 00]  =  // <  30 green 
+            a[i + 00]  =  
             b[i + 30]  =  // >= 30 blue
+            a[i + 30]  =  
             g[i + 60]  =  // >= 60 yellow 
             r[i + 60]  =
+            a[i + 30]  =  
             r[i + 90]  =  // >= 90 red
+            a[i + 90]  =  
             b[i + 120] =  // >=120 pink fading to transparent 
             a[i + 120] =  
             r[i + 120] = (byte) ((42 - i) * 6);
@@ -160,7 +164,7 @@ public class VertexRaster {
         byte[] b = new byte[256];
         byte[] a = new byte[256];
         Arrays.fill(a, (byte)190);
-        for (int i=0; i<40; i++) {
+        for (int i=0; i<30; i++) {
             byte c = (byte) ((40 - i) * 6);
             g[i + 00]  += c; // <  30 green 
             b[i + 30]  += c; // >= 30 blue
