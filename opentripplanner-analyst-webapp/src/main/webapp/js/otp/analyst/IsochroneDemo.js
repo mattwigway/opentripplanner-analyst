@@ -84,7 +84,6 @@ otp.analyst.IsochroneDemo = {
             thisMain.currentLocation = new OpenLayers.LonLat(marker.geometry.x, marker.geometry.y).transform(
                 thisMain.map.getProjectionObject(), new OpenLayers.Projection("EPSG:4326"));       
             thisMain.locationUpdated();
-            thisMain.isoQuery(0, false);
         };
 
         this.map.addControl(dragFeature);
@@ -200,6 +199,7 @@ otp.analyst.IsochroneDemo = {
 
     locationUpdated : function() {
         this.locationField.setValue(this.currentLocation.lat + "," + this.currentLocation.lon);
+        this.isoQuery(0, false);
     },
     
     CLASS_NAME: "otp.analyst.IsochroneDemo"
