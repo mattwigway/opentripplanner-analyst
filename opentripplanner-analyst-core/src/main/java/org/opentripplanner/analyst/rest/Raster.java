@@ -17,7 +17,9 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.opentripplanner.analyst.core.VertexRaster;
@@ -94,7 +96,11 @@ public class Raster {
                 ImageIO.write((BufferedImage) image, "png", out);
                 final byte[] imgData = out.toByteArray();
                 final InputStream bigInputStream = new ByteArrayInputStream(imgData);
-                return Response.ok(bigInputStream).build();
+                ResponseBuilder rb = Response.ok(bigInputStream);
+                CacheControl cc = new CacheControl();
+                cc.setMaxAge(3600);
+                cc.setNoCache(false);
+                return rb.cacheControl(cc).build();
             } catch (final IOException e) {
                 return Response.noContent().build();
             }
