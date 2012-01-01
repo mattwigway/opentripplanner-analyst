@@ -1,24 +1,16 @@
 package org.opentripplanner.analyst.core;
 
-import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
-import java.awt.image.DataBufferInt;
 import java.awt.image.IndexColorModel;
 import java.awt.image.RenderedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
-import org.geotools.coverage.grid.GridEnvelope2D;
-import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.geometry.Envelope2D;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
-import org.opengis.coverage.grid.GridEnvelope;
-import org.opengis.geometry.Envelope;
 import org.opentripplanner.common.IterableLibrary;
 import org.opentripplanner.common.geometry.HashGrid;
 import org.opentripplanner.routing.core.State;
@@ -27,10 +19,21 @@ import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.impl.DistanceLibrary;
 import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.opentripplanner.routing.vertextype.StreetVertex;
+import org.opentripplanner.routing.vertextype.TurnVertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Envelope;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.LineString;
+import com.vividsolutions.jts.geom.Point;
+import com.vividsolutions.jts.index.strtree.STRtree;
+import com.vividsolutions.jts.linearref.LinearLocation;
+import com.vividsolutions.jts.linearref.LocationIndexedLine;
+import com.vividsolutions.jts.operation.distance.DistanceOp;
+import com.vividsolutions.jts.operation.distance.GeometryLocation;
 
 public class VertexRaster {
 
@@ -39,17 +42,11 @@ public class VertexRaster {
 
     private static Graph graph;
     private static HashGrid<Vertex> hashGrid;
+    private static STRtree index;
     private static double minLon, minLat, maxLon, maxLat, avgLon, avgLat;
     private static double widthMeters,  heightMeters;
     private static double widthDegrees, heightDegrees;
     private static final IndexColorModel DEFAULT_COLOR_MAP = getDefaultColorMap();
-    
-    /* INSTANCE */
-    final double resolutionMeters;
-    final double lonPitch, latPitch;
-    final int widthPixels, heightPixels;
-    List<Sample> samples = new ArrayList<Sample>();
-    final BufferedImage image;
     
     // this should really be handled by graph-specific VertexRasterFactories not global state
     public static void setGraph(Graph g) {
@@ -72,9 +69,23 @@ public class VertexRaster {
         for (Vertex v : IterableLibrary.filter(g.getVertices(), StreetVertex.class)) {
             hashGrid.put(v);
         }
+        // build a spatial index of road geometries (not individual edges)
+        index = new STRtree();
+        for (TurnVertex tv : IterableLibrary.filter(g.getVertices(), TurnVertex.class)) {
+            Geometry geom = tv.getGeometry();
+            index.insert(geom.getEnvelopeInternal(), tv);
+        }
+        index.build();
     }
     
-    // actually, pixel sample point is in the center of the pixel...
+    /* INSTANCE */
+    final double resolutionMeters;
+    final double lonPitch, latPitch;
+    final int widthPixels, heightPixels;
+    List<Sample> samples = new ArrayList<Sample>();
+    final BufferedImage image;
+    
+    // actually, sample point should be in the center of the pixel...
     public VertexRaster(double resolutionMeters) {
         LOG.debug("preparing raster...");
         this.resolutionMeters = resolutionMeters;
@@ -84,25 +95,99 @@ public class VertexRaster {
         this.latPitch = degreesPerMeterLat * resolutionMeters;
         this.widthPixels  = (int) (widthDegrees  / lonPitch);
         this.heightPixels = (int) (heightDegrees / latPitch);
+        GeometryFactory factory = new GeometryFactory();
         // find a representative vertex for each pixel
         ArrayList<Sample> samples = new ArrayList<Sample>();
         for (int y=0; y<heightPixels; y++){
+            if (y % 100 == 0)
+                System.out.printf("y=%d \n", y);
             double lat = maxLat - y * latPitch; 
+            double radiusDegrees = DistanceLibrary.metersToDegrees(200);
             for (int x=0; x<widthPixels;  x++){
+                // System.out.printf("x=%d \n", x);
                 double lon = minLon + x * lonPitch;
-                Vertex v = hashGrid.closest(lon, lat, 200);
-                if (v != null) {
-                    int t = (int) (v.distance(new Coordinate(lon, lat)) / 1.33);
-                    samples.add(new Sample(x, y, v, t));
+                //Vertex v = hashGrid.closest(lon, lat, 200);
+                Coordinate c = new Coordinate(lon, lat);
+                Point p = factory.createPoint(c);
+                
+                // track best two turn vertices
+                TurnVertex v0 = null;
+                TurnVertex v1 = null;
+                DistanceOp o0 = null;
+                DistanceOp o1 = null;
+                double d0 = Double.MAX_VALUE;
+                double d1 = Double.MAX_VALUE;
+
+                // query
+                Envelope env = new Envelope(c);
+                env.expandBy(radiusDegrees, radiusDegrees);
+                @SuppressWarnings("unchecked")
+                List<TurnVertex> vs = (List<TurnVertex>) index.query(env);
+                if (vs == null)
+                    continue;
+                
+                // find two closest among nearby geometries
+                for (TurnVertex v : vs) {
+                    Geometry g = v.getGeometry();
+                    DistanceOp o = new DistanceOp(p, g);
+                    double d = o.distance();
+                    if (d > radiusDegrees)
+                        continue;
+                    if (d < d1) {
+                        if (d < d0) {
+                            v1 = v0;
+                            o1 = o0;
+                            d1 = d0;
+                            v0 = v;
+                            o0 = o;
+                            d0 = d;
+                        } else {
+                            v1 = v;
+                            o1 = o;
+                            d1 = d;
+                        }
+                    }
+                }
+                
+                // if at least one vertex was found make a sample
+                if (v0 != null) { 
+                    int t0 = timeToVertex(v0, o0);
+                    int t1 = timeToVertex(v1, o1);
+                    Sample s = new Sample(x, y, v0, t0, v1, t1);
+                    //System.out.printf("sample %d %d %d %s \n", s.x, s.y, s.time, s.vertex);
+                    // there are typically several samples per vertex, so maybe a
+                    // map<vertex, sample> would be more appropriate
+                    samples.add(s);
                 }
             }
         }
-        samples.trimToSize();
+        
         this.samples = samples;
         LOG.debug("finished preparing raster.");
         // reusable image object so gridcoverages etc can track updates
+        // DEFAULT_COLOR_MAP.createCompatibleWritableRaster(widthPixels, heightPixels);
         image = new BufferedImage(widthPixels, heightPixels, 
                     BufferedImage.TYPE_BYTE_INDEXED, DEFAULT_COLOR_MAP);
+    }
+    
+    private int timeToVertex(TurnVertex v, DistanceOp o) {
+        if (v == null)
+            return -1;
+        GeometryLocation[] gl = o.nearestLocations();
+        Geometry g = v.getGeometry();
+        LocationIndexedLine lil = new LocationIndexedLine(g);
+        LinearLocation ll = lil.indexOf(gl[1].getCoordinate());
+        LineString beginning = (LineString) 
+                lil.extractLine(lil.getStartIndex(), ll);                    
+        // WRONG: using unprojected coordinates
+        double lengthRatio = beginning.getLength() / g.getLength();
+        double distOnStreet = v.getLength() * lengthRatio;
+        double distToStreet = DistanceLibrary.distance(
+                gl[0].getCoordinate(), 
+                gl[1].getCoordinate());
+        double dist = distOnStreet + distToStreet;
+        int t = (int) (dist / 1.33);
+        return t;
     }
     
     public void generateImage(ShortestPathTree spt) {
@@ -110,26 +195,40 @@ public class VertexRaster {
         Arrays.fill(imagePixelData, (byte)255);
         LOG.debug("filling in image...");
         for (Sample s : samples) {
-            State state = spt.getState(s.vertex);
-            if (state == null)
-                continue;
-            long minutes = (state.getElapsedTime() + s.time) / 60;
-            if (minutes >= 150)
+            byte pixel = s.eval(spt);
+            if (pixel > 150)
                 continue;
             int index = s.x + s.y * widthPixels;
-            imagePixelData[index] = (byte) minutes;
+            imagePixelData[index] = pixel;
         }
         LOG.debug("finished filling in image.");
     }
 
     class Sample {
-        int x, y, time;
-        Vertex vertex;
-        Sample (int x, int y, Vertex vertex, int time) {
+        int x, y, t0, t1;
+        Vertex v0, v1;
+        Sample (int x, int y, Vertex v0, int t0, Vertex v1, int t1) {
             this.x = x;
             this.y = y;
-            this.vertex = vertex;
-            this.time = time;
+            this.v0 = v0;
+            this.t0 = t0;
+            this.v1 = v1;
+            this.t1 = t1;
+        }
+        public byte eval(ShortestPathTree spt) {
+            State s0 = spt.getState(v0);
+            State s1 = spt.getState(v1);
+            long m0 = 255;
+            long m1 = 255;
+            if (s0 != null)
+                m0 = (s0.getElapsedTime() + t0) / 60; 
+            if (s1 != null)
+                m1 = (s1.getElapsedTime() + t1) / 60; 
+            if (m1 < m0)
+                m0 = m1;
+            if (m0 >= 255)
+                m0 = 255;
+            return (byte) m0;
         }
     }
 
@@ -138,7 +237,7 @@ public class VertexRaster {
         byte[] g = new byte[256];
         byte[] b = new byte[256];
         byte[] a = new byte[256];
-        Arrays.fill(a, (byte)255);
+        Arrays.fill(a, (byte)0);
         for (int i=0; i<30; i++) {
             g[i + 00]  =  // <  30 green 
             a[i + 00]  =  
@@ -146,49 +245,26 @@ public class VertexRaster {
             a[i + 30]  =  
             g[i + 60]  =  // >= 60 yellow 
             r[i + 60]  =
-            a[i + 30]  =  
+            a[i + 60]  =  
             r[i + 90]  =  // >= 90 red
             a[i + 90]  =  
             b[i + 120] =  // >=120 pink fading to transparent 
             a[i + 120] =  
             r[i + 120] = (byte) ((42 - i) * 6);
         }
-        // 255 is transparent
-        a[255] = 0;
-        return new IndexColorModel(8, 256, r, g, b, a);
-    }
-
-    private static IndexColorModel getAlternateColorMap() {
-        byte[] r = new byte[256];
-        byte[] g = new byte[256];
-        byte[] b = new byte[256];
-        byte[] a = new byte[256];
-        Arrays.fill(a, (byte)190);
-        for (int i=0; i<30; i++) {
-            byte c = (byte) ((40 - i) * 6);
-            g[i + 00]  += c; // <  30 green 
-            b[i + 30]  += c; // >= 30 blue
-            g[i + 60]  += c; // >= 60 yellow 
-            r[i + 60]  += c;
-            r[i + 90]  += c; // >= 90 red
-            b[i + 120] += c; // >=120 pink 
-            a[i + 120] += c; // fading to transparent
-            r[i + 120] += c;
-        }
-        // 255 is transparent
-        a[255] = 0;
         return new IndexColorModel(8, 256, r, g, b, a);
     }
 
     public GridCoverage2D getGridCoverage2D() {
         com.vividsolutions.jts.geom.Envelope graphEnvelope = graph.getExtent();
-        Envelope graphRange = new Envelope2D(DefaultGeographicCRS.WGS84, 
+        org.opengis.geometry.Envelope graphRange = new Envelope2D(
+                DefaultGeographicCRS.WGS84, 
                 graphEnvelope.getMinX(),  graphEnvelope.getMinY(), 
                 graphEnvelope.getWidth(), graphEnvelope.getHeight());
         GridCoverage2D gridCoverage = new GridCoverageFactory().create(
                 (CharSequence) "name of the coverage", 
                 (RenderedImage) image, 
-                (Envelope) graphRange);
+                (org.opengis.geometry.Envelope) graphRange);
         return gridCoverage;
     }
 
