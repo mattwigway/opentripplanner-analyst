@@ -250,7 +250,7 @@ public class VertexRaster {
             a[i + 90]  =  
             b[i + 120] =  // >=120 pink fading to transparent 
             a[i + 120] =  
-            r[i + 120] = (byte) ((42 - i) * 6);
+            r[i + 120] = (byte) (255 - (42 - i) * 6);
         }
         return new IndexColorModel(8, 256, r, g, b, a);
     }
