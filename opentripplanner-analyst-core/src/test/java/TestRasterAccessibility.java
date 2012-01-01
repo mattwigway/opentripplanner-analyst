@@ -117,7 +117,7 @@ public class TestRasterAccessibility extends TestCase {
         Collections.shuffle(vertices);
         for (int i = 0; i<10; i++) {
             State initialState = new State(tripTime, vertices.get(i), options);
-            System.out.println(initialState);
+            System.out.printf("iteration %d : origin %s \n", i, initialState);
             
             long t0 = System.currentTimeMillis();
             System.out.printf("calculating spt \n");
@@ -126,29 +126,36 @@ public class TestRasterAccessibility extends TestCase {
             System.out.printf("done calculating spt %dmsec\n", (int)(t1-t0));
 
             t0 = System.currentTimeMillis();
-            System.out.printf("generating raster \n");
             raster.generateImage(spt);
             t1 = System.currentTimeMillis();
             System.out.printf("done generating raster %dmsec\n", (int)(t1-t0));
 
             t0 = System.currentTimeMillis();
-            System.out.printf("writing png \n");
+            System.out.printf("writing png ");
             File outputfile = new File(String.format("/home/syncopate/out%d.png", i));
             ImageIO.write(raster.getBufferedImage(), "png", outputfile);
             t1 = System.currentTimeMillis();
-            System.out.printf("done writing png %dmsec\n", (int)(t1-t0));
+            System.out.printf("%dmsec\n", (int)(t1-t0));
+ 
+            t0 = System.currentTimeMillis();
+            System.out.printf("writing gif ");
+            outputfile = new File(String.format("/home/syncopate/out%d.gif", i));
+            ImageIO.write(raster.getBufferedImage(), "gif", outputfile);
+            t1 = System.currentTimeMillis();
+            System.out.printf("%dmsec\n", (int)(t1-t0));
 
+            // JPG2K co/dec extremely freaking slow
 //            t0 = System.currentTimeMillis();
-//            System.out.printf("writing jpeg2k \n");
+//            System.out.printf("writing jpeg2k ");
 //            outputfile = new File(String.format("/home/syncopate/out%d.j2k", i));
 //            ImageIO.write(raster.getBufferedImage(), "jpeg2000", outputfile);
 //            t1 = System.currentTimeMillis();
-//            System.out.printf("done writing jpeg2k %dmsec\n", (int)(t1-t0));
+//            System.out.printf("%dmsec\n", (int)(t1-t0));
             
             GeoTiffWriter tiffWriter;
             File tiff = new File(String.format("/home/syncopate/out%d.tiff", i));
             t0 = System.currentTimeMillis();
-            System.out.printf("writing geotiff \n");
+            System.out.printf("writing geotiff ");
             try {
                 tiffWriter = new GeoTiffWriter(tiff);
                 tiffWriter.write(coverage, null);
@@ -156,7 +163,7 @@ public class TestRasterAccessibility extends TestCase {
                 e.printStackTrace();
             }
             t1 = System.currentTimeMillis();
-            System.out.printf("done writing geotiff %dmsec\n", (int)(t1-t0));
+            System.out.printf("%dmsec\n", (int)(t1-t0));
 
         }
     }
