@@ -175,7 +175,7 @@ otp.analyst.IsochroneDemo = {
         console.log(url);
         var options = {   
         		'alwaysInRange' : true,
-                'opacity': 0.4, 
+                'opacity': 0.8, 
                 'isBaseLayer': false,
                 numZoomLevels : 1 };
         var newIsoLayer = new OpenLayers.Layer.Image(
