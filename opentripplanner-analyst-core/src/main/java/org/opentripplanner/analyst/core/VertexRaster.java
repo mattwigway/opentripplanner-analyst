@@ -99,7 +99,7 @@ public class VertexRaster {
         ArrayList<Sample> samples = new ArrayList<Sample>();
         for (int y=0; y<heightPixels; y++){
             if (y % 100 == 0)
-                System.out.printf("y=%d \n", y);
+                LOG.debug("raster line {} / {}", y, heightPixels);
             double lat = maxLat - y * latPitch; 
             double radiusDegrees = DistanceLibrary.metersToDegrees(SEARCH_RADIUS);
             for (int x=0; x<widthPixels;  x++){
@@ -185,11 +185,11 @@ public class VertexRaster {
     }
     
     public BufferedImage generateImage(ShortestPathTree spt) {
+        long t0 = System.currentTimeMillis();
         BufferedImage image = new BufferedImage(widthPixels, heightPixels, 
                 BufferedImage.TYPE_BYTE_INDEXED, DEFAULT_COLOR_MAP);
         byte[] imagePixelData = ((DataBufferByte)image.getRaster().getDataBuffer()).getData();
         Arrays.fill(imagePixelData, (byte)255);
-        LOG.debug("filling in image...");
         for (Sample s : samples) {
             byte pixel = s.eval(spt);
             if (pixel > 150)
@@ -197,7 +197,8 @@ public class VertexRaster {
             int index = s.x + s.y * widthPixels;
             imagePixelData[index] = pixel;
         }
-        LOG.debug("finished filling in image.");
+        long t1 = System.currentTimeMillis();
+        LOG.debug("filled in raster from SPT in {}msec", t1 - t0);
         return image;
     }
 
