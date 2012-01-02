@@ -3,7 +3,6 @@ package org.opentripplanner.analyst.core;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.awt.image.IndexColorModel;
-import java.awt.image.RenderedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -39,7 +38,8 @@ public class VertexRaster {
 
     /* STATIC */
     private static final Logger LOG = LoggerFactory.getLogger(VertexRaster.class);
-
+    private static final double SEARCH_RADIUS = 200; // meters
+    
     private static Graph graph;
     private static HashGrid<Vertex> hashGrid;
     private static STRtree index;
@@ -83,9 +83,7 @@ public class VertexRaster {
     final double lonPitch, latPitch;
     final int widthPixels, heightPixels;
     List<Sample> samples = new ArrayList<Sample>();
-    final BufferedImage image;
     
-    // actually, sample point should be in the center of the pixel...
     public VertexRaster(double resolutionMeters) {
         LOG.debug("preparing raster...");
         this.resolutionMeters = resolutionMeters;
@@ -93,20 +91,20 @@ public class VertexRaster {
         double degreesPerMeterLat = heightDegrees / heightMeters;
         this.lonPitch = degreesPerMeterLon * resolutionMeters; 
         this.latPitch = degreesPerMeterLat * resolutionMeters;
+        // actually, sample point should be in the center of the pixel...
         this.widthPixels  = (int) (widthDegrees  / lonPitch);
         this.heightPixels = (int) (heightDegrees / latPitch);
         GeometryFactory factory = new GeometryFactory();
-        // find a representative vertex for each pixel
+        // find representative vertices for each pixel
         ArrayList<Sample> samples = new ArrayList<Sample>();
         for (int y=0; y<heightPixels; y++){
             if (y % 100 == 0)
                 System.out.printf("y=%d \n", y);
             double lat = maxLat - y * latPitch; 
-            double radiusDegrees = DistanceLibrary.metersToDegrees(200);
+            double radiusDegrees = DistanceLibrary.metersToDegrees(SEARCH_RADIUS);
             for (int x=0; x<widthPixels;  x++){
                 // System.out.printf("x=%d \n", x);
                 double lon = minLon + x * lonPitch;
-                //Vertex v = hashGrid.closest(lon, lat, 200);
                 Coordinate c = new Coordinate(lon, lat);
                 Point p = factory.createPoint(c);
                 
@@ -164,10 +162,6 @@ public class VertexRaster {
         
         this.samples = samples;
         LOG.debug("finished preparing raster.");
-        // reusable image object so gridcoverages etc can track updates
-        // DEFAULT_COLOR_MAP.createCompatibleWritableRaster(widthPixels, heightPixels);
-        image = new BufferedImage(widthPixels, heightPixels, 
-                    BufferedImage.TYPE_BYTE_INDEXED, DEFAULT_COLOR_MAP);
     }
     
     private int timeToVertex(TurnVertex v, DistanceOp o) {
@@ -190,7 +184,9 @@ public class VertexRaster {
         return t;
     }
     
-    public void generateImage(ShortestPathTree spt) {
+    public BufferedImage generateImage(ShortestPathTree spt) {
+        BufferedImage image = new BufferedImage(widthPixels, heightPixels, 
+                BufferedImage.TYPE_BYTE_INDEXED, DEFAULT_COLOR_MAP);
         byte[] imagePixelData = ((DataBufferByte)image.getRaster().getDataBuffer()).getData();
         Arrays.fill(imagePixelData, (byte)255);
         LOG.debug("filling in image...");
@@ -202,6 +198,7 @@ public class VertexRaster {
             imagePixelData[index] = pixel;
         }
         LOG.debug("finished filling in image.");
+        return image;
     }
 
     class Sample {
@@ -255,21 +252,16 @@ public class VertexRaster {
         return new IndexColorModel(8, 256, r, g, b, a);
     }
 
-    public GridCoverage2D getGridCoverage2D() {
+    public GridCoverage2D getGridCoverage2D(ShortestPathTree spt) {
+        BufferedImage image = generateImage(spt);
         com.vividsolutions.jts.geom.Envelope graphEnvelope = graph.getExtent();
         org.opengis.geometry.Envelope graphRange = new Envelope2D(
                 DefaultGeographicCRS.WGS84, 
                 graphEnvelope.getMinX(),  graphEnvelope.getMinY(), 
                 graphEnvelope.getWidth(), graphEnvelope.getHeight());
         GridCoverage2D gridCoverage = new GridCoverageFactory().create(
-                (CharSequence) "name of the coverage", 
-                (RenderedImage) image, 
-                (org.opengis.geometry.Envelope) graphRange);
+                "isochrone", image, graphRange);
         return gridCoverage;
-    }
-
-    public BufferedImage getBufferedImage() {
-        return image;
     }
     
     public Vertex closestVertex(double lon, double lat, double radiusMeters) {

@@ -87,8 +87,7 @@ public class Raster {
         long t1 = System.currentTimeMillis();
         System.out.printf("done calculating spt %dmsec\n", (int)(t1-t0));
 
-        vertexRaster.generateImage(spt);
-        Image image = vertexRaster.getBufferedImage();
+        Image image = vertexRaster.generateImage(spt);
 
         if (image != null) {
             final ByteArrayOutputStream out = new ByteArrayOutputStream();

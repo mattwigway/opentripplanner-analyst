@@ -1,3 +1,4 @@
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -108,7 +109,6 @@ public class TestRasterAccessibility extends TestCase {
     @Test
     public void testVertexRaster() throws Exception {
         VertexRaster raster = new VertexRaster(50);
-        GridCoverage2D coverage = raster.getGridCoverage2D();
         GenericDijkstra dijkstra = new GenericDijkstra(options);
         dijkstra.setShortestPathTreeFactory(new DijkstraOptions());
         dijkstra.setSkipTraverseResultStrategy(new DijkstraOptions());
@@ -126,25 +126,24 @@ public class TestRasterAccessibility extends TestCase {
             System.out.printf("done calculating spt %dmsec\n", (int)(t1-t0));
 
             t0 = System.currentTimeMillis();
-            raster.generateImage(spt);
+            BufferedImage image = raster.generateImage(spt);
             t1 = System.currentTimeMillis();
             System.out.printf("done generating raster %dmsec\n", (int)(t1-t0));
 
             t0 = System.currentTimeMillis();
             System.out.printf("writing png ");
             File outputfile = new File(String.format("/home/syncopate/out%d.png", i));
-            ImageIO.write(raster.getBufferedImage(), "png", outputfile);
+            ImageIO.write(image, "png", outputfile);
             t1 = System.currentTimeMillis();
             System.out.printf("%dmsec\n", (int)(t1-t0));
  
             t0 = System.currentTimeMillis();
             System.out.printf("writing gif ");
             outputfile = new File(String.format("/home/syncopate/out%d.gif", i));
-            ImageIO.write(raster.getBufferedImage(), "gif", outputfile);
+            ImageIO.write(image, "gif", outputfile);
             t1 = System.currentTimeMillis();
             System.out.printf("%dmsec\n", (int)(t1-t0));
 
-            // JPG2K co/dec extremely freaking slow
 //            t0 = System.currentTimeMillis();
 //            System.out.printf("writing jpeg2k ");
 //            outputfile = new File(String.format("/home/syncopate/out%d.j2k", i));
@@ -152,18 +151,19 @@ public class TestRasterAccessibility extends TestCase {
 //            t1 = System.currentTimeMillis();
 //            System.out.printf("%dmsec\n", (int)(t1-t0));
             
-            GeoTiffWriter tiffWriter;
-            File tiff = new File(String.format("/home/syncopate/out%d.tiff", i));
-            t0 = System.currentTimeMillis();
-            System.out.printf("writing geotiff ");
-            try {
-                tiffWriter = new GeoTiffWriter(tiff);
-                tiffWriter.write(coverage, null);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            t1 = System.currentTimeMillis();
-            System.out.printf("%dmsec\n", (int)(t1-t0));
+//            GridCoverage2D coverage = raster.getGridCoverage2D();
+//            GeoTiffWriter tiffWriter;
+//            File tiff = new File(String.format("/home/syncopate/out%d.tiff", i));
+//            t0 = System.currentTimeMillis();
+//            System.out.printf("writing geotiff ");
+//            try {
+//                tiffWriter = new GeoTiffWriter(tiff);
+//                tiffWriter.write(coverage, null);
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//            t1 = System.currentTimeMillis();
+//            System.out.printf("%dmsec\n", (int)(t1-t0));
 
         }
     }
