@@ -1,5 +1,7 @@
 import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -12,6 +14,10 @@ import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
+import org.geotools.coverage.grid.io.AbstractGridFormat;
+import org.geotools.coverage.grid.io.imageio.GeoToolsWriteParams;
+import org.geotools.gce.geotiff.GeoTiffFormat;
+import org.geotools.gce.geotiff.GeoTiffWriteParams;
 import org.geotools.gce.geotiff.GeoTiffWriter;
 import org.geotools.geometry.Envelope2D;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
@@ -19,6 +25,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.opengis.coverage.grid.GridEnvelope;
 import org.opengis.geometry.Envelope;
+import org.opengis.parameter.GeneralParameterValue;
+import org.opengis.parameter.ParameterValueGroup;
 import org.opentripplanner.analyst.core.TravelTimeImageFunction;
 import org.opentripplanner.analyst.core.VertexRaster;
 import org.opentripplanner.common.IterableLibrary;
@@ -120,52 +128,46 @@ public class TestRasterAccessibility extends TestCase {
             System.out.printf("iteration %d : origin %s \n", i, initialState);
             
             long t0 = System.currentTimeMillis();
-            System.out.printf("calculating spt \n");
             ShortestPathTree spt = dijkstra.getShortestPathTree(initialState);
             long t1 = System.currentTimeMillis();
-            System.out.printf("done calculating spt %dmsec\n", (int)(t1-t0));
+            System.out.printf("calculated spt %dmsec\n", (int)(t1-t0));
 
-            t0 = System.currentTimeMillis();
             BufferedImage image = raster.generateImage(spt);
-            t1 = System.currentTimeMillis();
-            System.out.printf("done generating raster %dmsec\n", (int)(t1-t0));
-
-            t0 = System.currentTimeMillis();
-            System.out.printf("writing png ");
-            File outputfile = new File(String.format("/home/syncopate/out%d.png", i));
-            ImageIO.write(image, "png", outputfile);
-            t1 = System.currentTimeMillis();
-            System.out.printf("%dmsec\n", (int)(t1-t0));
- 
-            t0 = System.currentTimeMillis();
-            System.out.printf("writing gif ");
-            outputfile = new File(String.format("/home/syncopate/out%d.gif", i));
-            ImageIO.write(image, "gif", outputfile);
-            t1 = System.currentTimeMillis();
-            System.out.printf("%dmsec\n", (int)(t1-t0));
-
-//            t0 = System.currentTimeMillis();
-//            System.out.printf("writing jpeg2k ");
-//            outputfile = new File(String.format("/home/syncopate/out%d.j2k", i));
-//            ImageIO.write(raster.getBufferedImage(), "jpeg2000", outputfile);
-//            t1 = System.currentTimeMillis();
-//            System.out.printf("%dmsec\n", (int)(t1-t0));
-            
-//            GridCoverage2D coverage = raster.getGridCoverage2D();
-//            GeoTiffWriter tiffWriter;
-//            File tiff = new File(String.format("/home/syncopate/out%d.tiff", i));
-//            t0 = System.currentTimeMillis();
-//            System.out.printf("writing geotiff ");
-//            try {
-//                tiffWriter = new GeoTiffWriter(tiff);
-//                tiffWriter.write(coverage, null);
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//            t1 = System.currentTimeMillis();
-//            System.out.printf("%dmsec\n", (int)(t1-t0));
-
+            saveImage(image, "png", i);
+            saveImage(image, "gif", i);
+            // jpeg2000 loading is very slow
+            saveImage(image, "jpeg2000", i);
+            saveImage(image, "tiff", i);
+            saveGeotiff(raster.getGridCoverage2D(spt), i);
         }
+    }
+    
+    private void saveImage(RenderedImage image, String format, int i) 
+        throws IOException {
+        System.out.printf("writing %s ", format);
+        long t0 = System.currentTimeMillis();
+        File outputfile = new File(String.format("/tmp/out%d.%s", i, format));
+        ImageIO.write(image, format, outputfile);
+        long t1 = System.currentTimeMillis();
+        System.out.printf("%dmsec\n", (int)(t1-t0));
+    }
+    
+    private void saveGeotiff(GridCoverage2D coverage, int i) 
+        throws Exception {
+        File tiff = new File(String.format("/tmp/out%d.geo.tiff", i));
+        long t0 = System.currentTimeMillis();
+        System.out.printf("writing geotiff ");
+        
+        GeoTiffWriteParams wp = new GeoTiffWriteParams();
+        wp.setCompressionMode(GeoTiffWriteParams.MODE_EXPLICIT);
+        wp.setCompressionType("LZW");
+
+        ParameterValueGroup params = new GeoTiffFormat().getWriteParameters();
+        params.parameter(AbstractGridFormat.GEOTOOLS_WRITE_PARAMS.getName().toString()).setValue(wp);
+        
+        new GeoTiffWriter(tiff).write(coverage, (GeneralParameterValue[]) params.values().toArray(new GeneralParameterValue[1]));
+        long t1 = System.currentTimeMillis();
+        System.out.printf("%dmsec\n", (int)(t1-t0));
     }
     
     class DijkstraOptions implements SkipTraverseResultStrategy, ShortestPathTreeFactory {
