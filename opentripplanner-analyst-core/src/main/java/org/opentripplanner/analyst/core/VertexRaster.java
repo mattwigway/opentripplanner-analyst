@@ -62,7 +62,7 @@ public class VertexRaster {
         widthMeters   = DistanceLibrary.distance(avgLat, minLon, avgLat, maxLon);
         heightDegrees = maxLat - minLat;
         widthDegrees  = maxLon - minLon;
-        System.out.printf("graph extent : %f %f %f %f \n", minLon, minLat, maxLon, maxLat);
+        LOG.debug("graph extent : {}", env);
 
         // use avglat/lon in making hashgrid
         hashGrid = new HashGrid<Vertex>(100, 400, 400);
