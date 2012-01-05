@@ -77,46 +77,10 @@ public class TestRasterAccessibility extends TestCase {
         options.setTransferTable(graph.getTransferTable());
         options.worstTime = tripTime + 60 * 150; // we don't display over 150 min
     }
-    
-    // disabled
-    public void XtestImageFunction() throws Exception {
-        List<Vertex> vertices = new ArrayList<Vertex>(graph.getVertices());
-        Collections.shuffle(vertices);
-        for (int i = 0; i < 2; i++) { 
-            State initialState = new State(tripTime, vertices.get(i), options);
-            System.out.println(initialState);
-            System.out.printf("finding spt \n");
-            ShortestPathTree spt = new GenericDijkstra(options).getShortestPathTree(initialState);
-            System.out.printf("preparing coverage \n");
-            TravelTimeImageFunction imageFunction = new TravelTimeImageFunction(hashGrid, spt);
-            com.vividsolutions.jts.geom.Envelope graphEnvelope = graph.getExtent();
-            Envelope graphRange = new Envelope2D(DefaultGeographicCRS.WGS84, 
-                    graphEnvelope.getMinX(),  graphEnvelope.getMinY(), 
-                    graphEnvelope.getWidth(), graphEnvelope.getHeight());
-            GridEnvelope gridRange = new GridEnvelope2D(0, 0, 2000, 1000);
-            GridGeometry2D gridGeometry = new GridGeometry2D(gridRange, graphRange);
-            GridCoverage2D gridCoverage = new GridCoverageFactory().create(
-                    "name of the coverage",
-                    imageFunction,
-                    gridGeometry,
-                    null,
-                    null);
-            GeoTiffWriter writer;
-            File tiff = new File(String.format("/home/syncopate/out%dfunc.tiff", i));
-            System.out.printf("writing tiff \n");
-            try {
-                writer = new GeoTiffWriter(tiff);
-                writer.write(gridCoverage, null);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            System.out.printf("done writing tiff \n");
-        }
-    }
 
     @Test
     public void testVertexRaster() throws Exception {
-        VertexRaster raster = new VertexRaster(50);
+        VertexRaster raster = new VertexRaster(100);
         GenericDijkstra dijkstra = new GenericDijkstra(options);
         dijkstra.setShortestPathTreeFactory(new DijkstraOptions());
         dijkstra.setSkipTraverseResultStrategy(new DijkstraOptions());
@@ -138,7 +102,8 @@ public class TestRasterAccessibility extends TestCase {
             // jpeg2000 loading is very slow
             saveImage(image, "jpeg2000", i);
             saveImage(image, "tiff", i);
-            saveGeotiff(raster.getGridCoverage2D(spt), i);
+            saveGeotiff(raster.getGridCoverage2D(spt), i, "coverage");
+            saveImageFunction(new TravelTimeImageFunction(raster, spt), i);
         }
     }
     
@@ -152,9 +117,9 @@ public class TestRasterAccessibility extends TestCase {
         System.out.printf("%dmsec\n", (int)(t1-t0));
     }
     
-    private void saveGeotiff(GridCoverage2D coverage, int i) 
+    private void saveGeotiff(GridCoverage2D coverage, int i, String variant) 
         throws Exception {
-        File tiff = new File(String.format("/tmp/out%d.geo.tiff", i));
+        File tiff = new File(String.format("/tmp/out%d.%s.geo.tiff", i, variant));
         long t0 = System.currentTimeMillis();
         System.out.printf("writing geotiff ");
         
@@ -168,6 +133,27 @@ public class TestRasterAccessibility extends TestCase {
         new GeoTiffWriter(tiff).write(coverage, (GeneralParameterValue[]) params.values().toArray(new GeneralParameterValue[1]));
         long t1 = System.currentTimeMillis();
         System.out.printf("%dmsec\n", (int)(t1-t0));
+    }
+
+    private void saveImageFunction(TravelTimeImageFunction imageFunc, int i) 
+        throws Exception {
+        com.vividsolutions.jts.geom.Envelope graphEnvelope = graph.getExtent();
+        Envelope graphRange = new Envelope2D(DefaultGeographicCRS.WGS84, 
+                graphEnvelope.getMinX(),  graphEnvelope.getMinY(), 
+                graphEnvelope.getWidth(), graphEnvelope.getHeight());
+        GridEnvelope gridRange = new GridEnvelope2D(0, 0, 500, 500);
+        GridGeometry2D gridGeometry = new GridGeometry2D(gridRange, graphRange);
+        System.out.printf("building arbitrary resolution gridcoverage via imagefunction ");
+        long t0 = System.currentTimeMillis();
+        GridCoverage2D gridCoverage = new GridCoverageFactory().create(
+                "image function test coverage",
+                imageFunc,
+                gridGeometry,
+                null,
+                null);
+        long t1 = System.currentTimeMillis();
+        System.out.printf("%dmsec\n", (int)(t1-t0));
+        saveGeotiff(gridCoverage, i, "func");
     }
     
     class DijkstraOptions implements SkipTraverseResultStrategy, ShortestPathTreeFactory {
