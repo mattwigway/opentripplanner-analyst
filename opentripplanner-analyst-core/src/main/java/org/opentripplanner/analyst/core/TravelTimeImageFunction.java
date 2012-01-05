@@ -13,31 +13,18 @@ import com.vividsolutions.jts.geom.Coordinate;
 
 public class TravelTimeImageFunction implements ImageFunction {
 
-    HashGrid<Vertex> hashGrid;
+    VertexRaster vr;
     ShortestPathTree spt;
     
-    public TravelTimeImageFunction (HashGrid<Vertex> hashGrid, ShortestPathTree spt) {
-        this.hashGrid = hashGrid;
+    public TravelTimeImageFunction (VertexRaster vr, ShortestPathTree spt) {
+        this.vr = vr;
         this.spt = spt;
     }
     
     @Override
     public void getElements(double startX, double startY, double deltaX, double deltaY, 
             int countX, int countY, int element, double[] real, double[] imag) {
-        int i = 0;
-        Arrays.fill(real, Double.NaN);
-        for (double lon=startX, x=0; x<countX; lon+=deltaX, x+=1) {
-            for (double lat=startY, y=0; y<countY; lat+=deltaY, y+=1) {
-//                Vertex v = hashGrid.closest(lon, lat, 150);
-//                if (v != null) {
-//                    State s = spt.getState(v);
-//                    if (s != null)
-//                        real[i] = s.getElapsedTime();
-//                }
-                real[i] = i;
-                i+=1;
-            }
-        }
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -50,21 +37,19 @@ public class TravelTimeImageFunction implements ImageFunction {
         return false;
     }
 
-    // gridCoverageWriter is using this one
     @Override
     public void getElements(float startX, float startY, float deltaX, float deltaY, 
             int countX, int countY, int element, float[] real, float[] imag) {
         int i = 0;
         Arrays.fill(real, Float.NaN);
-        for (double lat=startY, y=0; y<countY; lat+=deltaY, y+=1) {
-        for (double lon=startX, x=0; x<countX; lon+=deltaX, x+=1) {
-                Vertex v = hashGrid.closest(lon, lat, 200);
-                if (v != null) {
-                    State s = spt.getState(v);
-                    if (s != null)
-                        real[i] = (float) (s.getElapsedTime() + v.distance(new Coordinate(lon, lat)));
+        double lat = startY;
+        for (int y=0; y<countY; lat+=deltaY, y+=1) {
+            double lon = startX;
+            for (int x=0; x<countX; lon+=deltaX, x+=1) {
+                VertexRaster.Sample s = vr.makeSample(x, y, lon, lat);
+                if (s != null) {
+                    real[i] = (float) s.eval(spt);
                 }
-                //real[i] = (i / (float)(countX * countY));
                 i+=1;
             }
         }
