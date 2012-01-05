@@ -38,7 +38,9 @@ public class VertexRaster {
 
     /* STATIC */
     private static final Logger LOG = LoggerFactory.getLogger(VertexRaster.class);
-    private static final double SEARCH_RADIUS = 200; // meters
+    private static final double SEARCH_RADIUS_M = 200; // meters
+    private static final double SEARCH_RADIUS_DEG = 
+            DistanceLibrary.metersToDegrees(SEARCH_RADIUS_M);
     
     private static Graph graph;
     private static HashGrid<Vertex> hashGrid;
@@ -48,6 +50,8 @@ public class VertexRaster {
     private static double widthDegrees, heightDegrees;
     private static final IndexColorModel DEFAULT_COLOR_MAP = getDefaultColorMap();
     
+    private static final GeometryFactory factory = new GeometryFactory();
+
     // this should really be handled by graph-specific VertexRasterFactories not global state
     public static void setGraph(Graph g) {
         graph = g;
@@ -94,73 +98,20 @@ public class VertexRaster {
         // actually, sample point should be in the center of the pixel...
         this.widthPixels  = (int) (widthDegrees  / lonPitch);
         this.heightPixels = (int) (heightDegrees / latPitch);
-        GeometryFactory factory = new GeometryFactory();
         // find representative vertices for each pixel
-        ArrayList<Sample> samples = new ArrayList<Sample>();
+        this.samples = new ArrayList<Sample>();
         for (int y=0; y<heightPixels; y++){
             if (y % 100 == 0)
                 LOG.debug("raster line {} / {}", y, heightPixels);
             double lat = maxLat - y * latPitch; 
-            double radiusDegrees = DistanceLibrary.metersToDegrees(SEARCH_RADIUS);
             for (int x=0; x<widthPixels;  x++){
                 // System.out.printf("x=%d \n", x);
                 double lon = minLon + x * lonPitch;
-                Coordinate c = new Coordinate(lon, lat);
-                Point p = factory.createPoint(c);
-                
-                // track best two turn vertices
-                TurnVertex v0 = null;
-                TurnVertex v1 = null;
-                DistanceOp o0 = null;
-                DistanceOp o1 = null;
-                double d0 = Double.MAX_VALUE;
-                double d1 = Double.MAX_VALUE;
-
-                // query
-                Envelope env = new Envelope(c);
-                env.expandBy(radiusDegrees, radiusDegrees);
-                @SuppressWarnings("unchecked")
-                List<TurnVertex> vs = (List<TurnVertex>) index.query(env);
-                if (vs == null)
-                    continue;
-                
-                // find two closest among nearby geometries
-                for (TurnVertex v : vs) {
-                    Geometry g = v.getGeometry();
-                    DistanceOp o = new DistanceOp(p, g);
-                    double d = o.distance();
-                    if (d > radiusDegrees)
-                        continue;
-                    if (d < d1) {
-                        if (d < d0) {
-                            v1 = v0;
-                            o1 = o0;
-                            d1 = d0;
-                            v0 = v;
-                            o0 = o;
-                            d0 = d;
-                        } else {
-                            v1 = v;
-                            o1 = o;
-                            d1 = d;
-                        }
-                    }
-                }
-                
-                // if at least one vertex was found make a sample
-                if (v0 != null) { 
-                    int t0 = timeToVertex(v0, o0);
-                    int t1 = timeToVertex(v1, o1);
-                    Sample s = new Sample(x, y, v0, t0, v1, t1);
-                    //System.out.printf("sample %d %d %d %s \n", s.x, s.y, s.time, s.vertex);
-                    // there are typically several samples per vertex, so maybe a
-                    // map<vertex, sample> would be more appropriate
+                Sample s = this.makeSample(x, y, lon, lat);
+                if (s != null)
                     samples.add(s);
-                }
             }
         }
-        
-        this.samples = samples;
         LOG.debug("finished preparing raster.");
     }
     
@@ -213,6 +164,7 @@ public class VertexRaster {
             this.v1 = v1;
             this.t1 = t1;
         }
+                
         public byte eval(ShortestPathTree spt) {
             State s0 = spt.getState(v0);
             State s1 = spt.getState(v1);
@@ -228,6 +180,61 @@ public class VertexRaster {
                 m0 = 255;
             return (byte) m0;
         }
+    }
+    
+    public Sample makeSample(int x, int y, double lon, double lat) {
+        Coordinate c = new Coordinate(lon, lat);
+        Point p = factory.createPoint(c);
+        
+        // track best two turn vertices
+        TurnVertex v0 = null;
+        TurnVertex v1 = null;
+        DistanceOp o0 = null;
+        DistanceOp o1 = null;
+        double d0 = Double.MAX_VALUE;
+        double d1 = Double.MAX_VALUE;
+
+        // query
+        Envelope env = new Envelope(c);
+        env.expandBy(SEARCH_RADIUS_DEG, SEARCH_RADIUS_DEG);
+        @SuppressWarnings("unchecked")
+        List<TurnVertex> vs = (List<TurnVertex>) index.query(env);
+        // query always returns a (possibly empty) list, but never null
+//        if (vs == null)
+//            return null;
+        
+        // find two closest among nearby geometries
+        for (TurnVertex v : vs) {
+            Geometry g = v.getGeometry();
+            DistanceOp o = new DistanceOp(p, g);
+            double d = o.distance();
+            if (d > SEARCH_RADIUS_DEG)
+                continue;
+            if (d < d1) {
+                if (d < d0) {
+                    v1 = v0;
+                    o1 = o0;
+                    d1 = d0;
+                    v0 = v;
+                    o0 = o;
+                    d0 = d;
+                } else {
+                    v1 = v;
+                    o1 = o;
+                    d1 = d;
+                }
+            }
+        }
+        
+        // if at least one vertex was found make a sample
+        if (v0 != null) { 
+            int t0 = timeToVertex(v0, o0);
+            int t1 = timeToVertex(v1, o1);
+            Sample s = new Sample(x, y, v0, t0, v1, t1);
+            //System.out.printf("sample %d %d %d %s \n", s.x, s.y, s.time, s.vertex);
+            return s;
+        }
+        return null;
     }
 
     private static IndexColorModel getDefaultColorMap() {
