@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 import com.sun.jersey.spi.resource.Singleton;
 
 @Path("raster")
-@Singleton
+//@Singleton
 public class Raster {
     
     private static final Logger LOG = LoggerFactory.getLogger(Raster.class);
