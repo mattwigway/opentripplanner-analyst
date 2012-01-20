@@ -20,12 +20,12 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
 import org.opentripplanner.common.IterableLibrary;
 import org.opentripplanner.routing.core.State;
-import org.opentripplanner.routing.graph.Graph;
-import org.opentripplanner.routing.graph.Vertex;
+import org.opentripplanner.routing.core.Graph;
+import org.opentripplanner.routing.core.Vertex;
 import org.opentripplanner.routing.impl.DistanceLibrary;
 import org.opentripplanner.routing.services.GraphService;
 import org.opentripplanner.routing.spt.ShortestPathTree;
-import org.opentripplanner.routing.vertextype.TurnVertex;
+import org.opentripplanner.routing.edgetype.StreetVertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +59,7 @@ public class Tile {
         com.vividsolutions.jts.geom.Envelope env = graph.getExtent();
         // build a spatial index of road geometries (not individual edges)
         index = new STRtree();
-        for (TurnVertex tv : IterableLibrary.filter(graph.getVertices(), TurnVertex.class)) {
+        for (StreetVertex tv : IterableLibrary.filter(graph.getVertices(), StreetVertex.class)) {
             Geometry geom = tv.getGeometry();
             index.insert(geom.getEnvelopeInternal(), tv);
         }
@@ -109,7 +109,7 @@ public class Tile {
         LOG.debug("finished preparing raster.");
     }
     
-    private int timeToVertex(TurnVertex v, DistanceOp o) {
+    private int timeToVertex(StreetVertex v, DistanceOp o) {
         if (v == null)
             return -1;
         GeometryLocation[] gl = o.nearestLocations();
@@ -181,8 +181,8 @@ public class Tile {
         Point p = factory.createPoint(c);
         
         // track best two turn vertices
-        TurnVertex v0 = null;
-        TurnVertex v1 = null;
+        StreetVertex v0 = null;
+        StreetVertex v1 = null;
         DistanceOp o0 = null;
         DistanceOp o1 = null;
         double d0 = Double.MAX_VALUE;
@@ -192,13 +192,13 @@ public class Tile {
         Envelope env = new Envelope(c);
         env.expandBy(SEARCH_RADIUS_DEG, SEARCH_RADIUS_DEG);
         @SuppressWarnings("unchecked")
-        List<TurnVertex> vs = (List<TurnVertex>) index.query(env);
+        List<StreetVertex> vs = (List<StreetVertex>) index.query(env);
         // query always returns a (possibly empty) list, but never null
 //        if (vs == null)
 //            return null;
         
         // find two closest among nearby geometries
-        for (TurnVertex v : vs) {
+        for (StreetVertex v : vs) {
             Geometry g = v.getGeometry();
             DistanceOp o = new DistanceOp(p, g);
             double d = o.distance();

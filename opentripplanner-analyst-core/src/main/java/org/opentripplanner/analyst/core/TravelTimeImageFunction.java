@@ -4,12 +4,7 @@ import java.util.Arrays;
 
 import javax.media.jai.ImageFunction;
 
-import org.opentripplanner.common.geometry.HashGrid;
-import org.opentripplanner.routing.core.State;
-import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.spt.ShortestPathTree;
-
-import com.vividsolutions.jts.geom.Coordinate;
 
 public class TravelTimeImageFunction implements ImageFunction {
 

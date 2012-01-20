@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 
-import org.opentripplanner.routing.graph.Graph;
+import org.opentripplanner.routing.core.Graph;
 import org.opentripplanner.routing.core.LowerBoundGraph;
 import org.opentripplanner.routing.impl.GraphServiceImpl;
 

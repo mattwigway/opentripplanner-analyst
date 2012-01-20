@@ -4,16 +4,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.opentripplanner.common.IterableLibrary;
-import org.opentripplanner.common.geometry.HashGrid;
 import org.opentripplanner.common.model.T2;
 import org.opentripplanner.routing.algorithm.GenericDijkstra;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.TraverseOptions;
-import org.opentripplanner.routing.graph.Graph;
-import org.opentripplanner.routing.graph.Vertex;
+import org.opentripplanner.routing.core.Graph;
+import org.opentripplanner.routing.core.Vertex;
 import org.opentripplanner.routing.services.GraphService;
 import org.opentripplanner.routing.spt.ShortestPathTree;
-import org.opentripplanner.routing.vertextype.StreetVertex;
+import org.opentripplanner.routing.edgetype.StreetVertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +23,6 @@ public class SPTCache {
     private static Map<T2<Vertex, Long>, ShortestPathTree> cache = 
             new HashMap<T2<Vertex, Long>, ShortestPathTree>();
     private static TraverseOptions options;
-    private static HashGrid<Vertex> hashGrid;
     
     private SPTCache() { /* do not instantiate me */ }
     
@@ -41,14 +39,11 @@ public class SPTCache {
       options.setMaxWalkDistance(30000);
       options.setTransferTable(graph.getTransferTable());
       
-      hashGrid = new HashGrid<Vertex>(100, 400, 400);
-      for (Vertex v : IterableLibrary.filter(graph.getVertices(), StreetVertex.class)) {
-          hashGrid.put(v);
-      }
     }
 
     public static ShortestPathTree get(double lon, double lat, long t) {
-        Vertex v = hashGrid.closest(lon, lat, 400);
+        // kludge: Tile happens to have an STRTree in it
+        Vertex v = Tile.vertexNear(lon, lat, 400);
         T2<Vertex, Long> key = new T2<Vertex, Long>(v, t);
         LOG.debug("request spt for {} {}", v, t);
         ShortestPathTree spt = cache.get(key);

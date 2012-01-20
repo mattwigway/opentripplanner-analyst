@@ -24,8 +24,8 @@ import org.opentripplanner.analyst.core.VertexRaster;
 import org.opentripplanner.routing.algorithm.GenericDijkstra;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.TraverseOptions;
-import org.opentripplanner.routing.graph.Graph;
-import org.opentripplanner.routing.graph.Vertex;
+import org.opentripplanner.routing.core.Graph;
+import org.opentripplanner.routing.core.Vertex;
 import org.opentripplanner.routing.impl.GraphServiceImpl;
 import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.slf4j.Logger;
@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 import com.sun.jersey.spi.resource.Singleton;
 
 //@Path("raster")
-//@Singleton
+@Singleton
 public class Raster {
     
     private static final Logger LOG = LoggerFactory.getLogger(Raster.class);
