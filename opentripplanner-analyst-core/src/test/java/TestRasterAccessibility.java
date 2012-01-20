@@ -30,7 +30,6 @@ import org.opengis.parameter.ParameterValueGroup;
 import org.opentripplanner.analyst.core.TravelTimeImageFunction;
 import org.opentripplanner.analyst.core.VertexRaster;
 import org.opentripplanner.common.IterableLibrary;
-import org.opentripplanner.common.geometry.HashGrid;
 import org.opentripplanner.routing.algorithm.GenericDijkstra;
 import org.opentripplanner.routing.algorithm.strategies.SearchTerminationStrategy;
 import org.opentripplanner.routing.algorithm.strategies.SkipTraverseResultStrategy;
@@ -42,7 +41,7 @@ import org.opentripplanner.routing.impl.GraphServiceImpl;
 import org.opentripplanner.routing.spt.MultiShortestPathTree;
 import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.opentripplanner.routing.spt.ShortestPathTreeFactory;
-import org.opentripplanner.routing.vertextype.StreetVertex;
+import org.opentripplanner.routing.edgetype.StreetVertex;
 
 public class TestRasterAccessibility extends TestCase {
 
