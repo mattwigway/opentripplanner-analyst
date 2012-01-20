@@ -40,9 +40,9 @@ public class TileRequest implements Request<Tile> {
     }
 
     public int hashCode() {
-            return bbox.hashCode() * 42670 +
+            return bbox.hashCode() * 42677 +
                     width  * 32 +
-                    height * 1317;
+                    height * 1307;
     }
     
     public boolean equals(Object other) {
