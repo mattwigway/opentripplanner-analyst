@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import com.sun.jersey.spi.resource.Singleton;
 
-@Path("raster")
+//@Path("raster")
 //@Singleton
 public class Raster {
     

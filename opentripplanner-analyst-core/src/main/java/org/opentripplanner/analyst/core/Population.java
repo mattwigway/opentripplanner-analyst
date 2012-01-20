@@ -125,7 +125,7 @@ public class Population {
     // graph.addEdge(new FreeEdge(close, v));
     // // if (close instanceof StreetLocation) {
     // // // temp vertex with its own extra edges
-    // // for (DirectEdge de : ((StreetLocation) close).getExtra()) {
+    // // for (Edge de : ((StreetLocation) close).getExtra()) {
     // // graph.addEdge(de);
     // // }
     // // }

@@ -42,7 +42,8 @@ public class WMSTimeStringReaderProvider implements StringReaderProvider {
         // private abstract <T> convert (String param);
         
         protected Response fail(String param, Exception e) {
-            return Response.status(Status.BAD_REQUEST).entity(param + ": " + e.getMessage()).build();
+            return Response.status(Status.BAD_REQUEST).entity(
+                    "parsing time " + param + ": " + e.getMessage()).build();
         }
 
     }

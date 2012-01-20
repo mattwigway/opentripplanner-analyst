@@ -1,17 +1,12 @@
 package org.opentripplanner.analyst.rest;
 
-import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.GregorianCalendar;
-import java.util.List;
-
 import javax.imageio.ImageIO;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -19,21 +14,21 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.CacheControl;
-import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.core.UriInfo;
 
+import org.geotools.coverage.grid.GridEnvelope2D;
+import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.geometry.Envelope2D;
-import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.opengis.geometry.Envelope;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opentripplanner.analyst.core.VertexRaster;
+import org.opentripplanner.analyst.core.Tile;
+import org.opentripplanner.analyst.request.SPTCache;
+import org.opentripplanner.analyst.request.TileCache;
 import org.opentripplanner.analyst.rest.parameter.WMSImageFormat;
-import org.opentripplanner.routing.algorithm.GenericDijkstra;
-import org.opentripplanner.routing.core.State;
-import org.opentripplanner.routing.core.TraverseOptions;
 import org.opentripplanner.routing.graph.Graph;
-import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.impl.GraphServiceImpl;
 import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.slf4j.Logger;
@@ -45,35 +40,19 @@ import com.sun.jersey.spi.resource.Singleton;
 @Singleton
 public class WebMapService {
     
-    private static final Logger LOG = LoggerFactory.getLogger(Raster.class);
-    private VertexRaster vertexRaster;
-    private List<Vertex> vertices;
-    private TraverseOptions options;
-    private long tripTime;
+    private static final Logger LOG = LoggerFactory.getLogger(WebMapService.class);
     
     public WebMapService() {
         File graphFile = new File("/home/syncopate/otp_data/pdx/Graph.obj");
         Graph graph;
+        // TODO: switch to Spring IOC
         try {
-//            graph = Graph.load(graphFile, Graph.LoadLevel.FULL);
-//            GraphServiceImpl graphService = new GraphServiceImpl();
-//            graphService.setGraph(graph);
-//            VertexRaster.setGraph(graph);    
-//            vertexRaster = new VertexRaster(50);
-//            vertices = new ArrayList<Vertex>(graph.getVertices());
-//            Collections.shuffle(vertices);
-            
-//            // dec 6 2011 7:45am CET
-//            tripTime = 1323153900;
-//            options = new TraverseOptions();
-//            //genericDijkstra asks for a traverseoptions, but state contains one now...
-//            options.setCalendarService(graphService.getCalendarService());
-//            // must set calendar service before setting service days
-//            options.setServiceDays(tripTime);
-//            options.setMaxWalkDistance(30000);
-//            options.setTransferTable(graph.getTransferTable());
-
-        } catch (Exception e) {
+            graph = Graph.load(graphFile, Graph.LoadLevel.FULL);
+            GraphServiceImpl graphService = new GraphServiceImpl();
+            graphService.setGraph(graph);
+            Tile.setGraphService(graphService);
+            SPTCache.setGraphService(graphService);    
+        } catch (Exception e) { // IO or class not found
             e.printStackTrace();
         }
     }
@@ -85,67 +64,64 @@ public class WebMapService {
            @QueryParam("REQUEST") String  request,
            @QueryParam("LAYERS")  String  layers, 
            @QueryParam("STYLES")  String  styles, 
-           @QueryParam("CRS")     CoordinateReferenceSystem crs,
+           @QueryParam("SRS")     CoordinateReferenceSystem crs,
            @QueryParam("BBOX")    Envelope2D bbox, 
-           @QueryParam("WIDTH")   Integer width, 
-           @QueryParam("HEIGHT")  Integer height, 
-           @QueryParam("FORMAT")  WMSImageFormat format,
+           @QueryParam("WIDTH")   int width, 
+           @QueryParam("HEIGHT")  int height, 
+           @QueryParam("FORMAT")  String format,
            // Optional parameters
-           @QueryParam("TRANSPARENT") 
-           @DefaultValue("false")    Boolean transparent,
-           @QueryParam("BGCOLOR") 
-           @DefaultValue("0xFFFFFF") String bgcolor,
-           @QueryParam("EXCEPTIONS") 
-           @DefaultValue("XML")      String exceptions,
-           @QueryParam("TIME")       GregorianCalendar time, 
-           @QueryParam("ELEVATION") 
-           @DefaultValue("0")        Float elevation, 
+           @QueryParam("TRANSPARENT") @DefaultValue("false") Boolean transparent,
+           @QueryParam("BGCOLOR") @DefaultValue("0xFFFFFF") String bgcolor,
+           @QueryParam("EXCEPTIONS") @DefaultValue("XML") String exceptions,
+           @QueryParam("TIME") GregorianCalendar time, 
+           @QueryParam("ELEVATION") @DefaultValue("0") Float elevation, 
            // Sample dimensions
-           @QueryParam("DIM_ORIGINLON") 
-           @DefaultValue("0")        Float originLon, 
-           @QueryParam("DIM_ORIGINLAT") 
-           @DefaultValue("0")        Float originLat
-           ) { 
-       
+           @QueryParam("DIM_ORIGINLON") @DefaultValue("0") Float originLon, 
+           @QueryParam("DIM_ORIGINLAT") @DefaultValue("0") Float originLat,
+           @Context UriInfo uriInfo ) { 
         
         // MapSearchRequest
-        // MapTileRequest
+        // MapTileRequest -- includes Graph ref?
         // MapRenderRequest
+
+        LOG.debug("uri {}", uriInfo.getAbsolutePath());
+        LOG.debug("params {}", uriInfo.getQueryParameters());
+        
         bbox.setCoordinateReferenceSystem(crs);
+        GridEnvelope2D gridEnvelope = new GridEnvelope2D(0, 0, width, height);
+        GridGeometry2D gridGeometry = new GridGeometry2D(gridEnvelope, (Envelope)bbox);
+
         LOG.debug("crs is : {}", crs);
         LOG.debug("bbox is : {}", bbox);
+        LOG.debug("grid envelope is : {}", gridEnvelope);
         LOG.debug("search time is : {}", time);
 
-        Vertex origin = vertexRaster.closestVertex(originLon, originLat, 400);
-        State initialState = new State(time.getTimeInMillis()/1000, origin, options);
-        LOG.debug("initial state: {}", initialState);
 
-        GenericDijkstra dijkstra = new GenericDijkstra(options);
-        long t0 = System.currentTimeMillis();
-        ShortestPathTree spt = dijkstra.getShortestPathTree(initialState);
-        long t1 = System.currentTimeMillis();
-        LOG.debug("calculated spt in {}msec", (int)(t1-t0));
-
-        Image image = vertexRaster.generateImage(spt);
-
+        Tile tile = TileCache.get(gridGeometry);
+        ShortestPathTree spt = SPTCache.get(originLon, originLat, time.getTimeInMillis());
+        BufferedImage image = tile.generateImage(spt);
+        
         if (image != null) {
             final ByteArrayOutputStream out = new ByteArrayOutputStream();
             try {
-                t0 = System.currentTimeMillis();
-                ImageIO.write((BufferedImage) image, format.toString(), out);
+                long t0 = System.currentTimeMillis();
+                ImageIO.write(image, "png", out);
                 final byte[] imgData = out.toByteArray();
                 final InputStream bigInputStream = new ByteArrayInputStream(imgData);
-                t1 = System.currentTimeMillis();
+                long t1 = System.currentTimeMillis();
                 LOG.debug("wrote image in {}msec", (int)(t1-t0));
                 ResponseBuilder rb = Response.ok(bigInputStream);
                 CacheControl cc = new CacheControl();
                 cc.setMaxAge(3600);
                 cc.setNoCache(false);
+                LOG.debug("response image prepared");
                 return rb.cacheControl(cc).build();
             } catch (final IOException e) {
+                LOG.debug("exception while perparing image : {}", e.getMessage());
                 return Response.noContent().build();
             }
         }
+        LOG.debug("response image is null");
         return Response.noContent().build();
     }
 

@@ -47,12 +47,38 @@ otp.analyst.IsochroneDemo = {
             
         var baseOSM = new OpenLayers.Layer.OSM("MapQuest-OSM Tiles", arrayOSM);
         var baseAerial = new OpenLayers.Layer.OSM("MapQuest Open Aerial Tiles", arrayAerial);
-       
         this.map.addLayer(baseOSM);
         this.map.addLayer(baseAerial);
+        
+        var url = "/opentripplanner-analyst-core/wms";
+        var params = { // getmap query string
+            layers : "test",
+            //crs : this.map.getProjectionObject(),
+            transparent : true,
+            time : "2011-12-20T12:45:00Z"
+        };
+        var options = { // openlayers layer options
+    		alwaysInRange : true,
+            //'opacity': 0.8, 
+    			visible : true,
+            isBaseLayer : true,
+            //numZoomLevels : 1
+        };
+        var isoLayer = new OpenLayers.Layer.WMS(
+                'Isochrone',
+                url,
+                params,
+                options );
+        
+        thisMain.map.addLayer(isoLayer);
+        console.log(isoLayer);
+        console.log(isoLayer.getFullRequestString());
+        this.isoLayer = isoLayer;
+      
         this.map.addControl(new OpenLayers.Control.LayerSwitcher());
         
-        var initLocationProj = new OpenLayers.LonLat(-122.68, 45.50).transform(
+        var initLocation = new OpenLayers.LonLat(-122.68, 45.50);
+        var initLocationProj = initLocation.transform(
                 new OpenLayers.Projection("EPSG:4326"), this.map.getProjectionObject());
         console.log("map proj: "+this.map.getProjectionObject());    
         var markers = new OpenLayers.Layer.Vector(
@@ -68,7 +94,6 @@ otp.analyst.IsochroneDemo = {
                 }),
             }
         );
-        
         
         var marker = new OpenLayers.Feature.Vector(
             new OpenLayers.Geometry.Point(initLocationProj.lon, initLocationProj.lat)
@@ -167,38 +192,81 @@ otp.analyst.IsochroneDemo = {
         this.locationUpdated();
     },
 
+//    isoQuery : function(maxTime, inSeries) {
+//        var thisMain = this;
+//        var url = "/opentripplanner-analyst-core/raster?fromLat=" + 
+//                   this.currentLocation.lat + "&fromLon=" + 
+//                   this.currentLocation.lon ;
+//        console.log(url);
+//        var options = {   
+//        		'alwaysInRange' : true,
+//                //'opacity': 0.8, 
+//                'isBaseLayer': false,
+//                numZoomLevels : 1 };
+//        var newIsoLayer = new OpenLayers.Layer.Image(
+//                'Isochrone',
+//                url,
+//                //this.map.getExtent(),
+//                new OpenLayers.Bounds(-123.242146, 45.154576, -122.021497, 45.721398).transform(
+//                		new OpenLayers.Projection("EPSG:4326"), this.map.getProjectionObject()),
+//                new OpenLayers.Size(1904, 1260),
+//                options);
+//        
+//        if (thisMain.isoLayer != null) 
+//        	this.map.removeLayer(thisMain.isoLayer);
+//        thisMain.map.addLayer(newIsoLayer);
+//        //thisMain.map.setLayerIndex(isoLayer, -2);
+//        thisMain.isoLayer = newIsoLayer;
+//        console.log(this.map.getProjectionObject());
+//        console.log(this.map.getExtent());
+//        console.log(newIsoLayer);
+//    },
+
     isoQuery : function(maxTime, inSeries) {
         var thisMain = this;
-        var url = "/opentripplanner-analyst-core/raster?fromLat=" + 
-                   this.currentLocation.lat + "&fromLon=" + 
-                   this.currentLocation.lon ;
-        console.log(url);
-        var options = {   
-        		'alwaysInRange' : true,
-                //'opacity': 0.8, 
-                'isBaseLayer': false,
-                numZoomLevels : 1 };
-        var newIsoLayer = new OpenLayers.Layer.Image(
-                'Isochrone',
-                url,
-                //this.map.getExtent(),
-                new OpenLayers.Bounds(-123.242146, 45.154576, -122.021497, 45.721398).transform(
-                		new OpenLayers.Projection("EPSG:4326"), this.map.getProjectionObject()),
-                new OpenLayers.Size(1904, 1260),
-                options);
+//        var url = "/opentripplanner-analyst-core/wms";
+//        var params = { // getmap query string
+//            layers : "test",
+//            //crs : this.map.getProjectionObject(),
+//            transparent : true,
+//            time : 0,
+//            DIM_ORIGINLON : this.currentLocation.lon,
+//            DIM_ORIGINLAT : this.currentLocation.lat
+//        };
+//        var options = { // openlayers layer options
+//    		alwaysInRange : true,
+//            //'opacity': 0.8, 
+//    		visible : true,
+//            isBaseLayer : false,
+//            //numZoomLevels : 1
+//        };
+//        var newIsoLayer = new OpenLayers.Layer.WMS(
+//                'Isochrone',
+//                url,
+//                params,
+//                options );
         
-        if (thisMain.isoLayer != null) 
-        	this.map.removeLayer(thisMain.isoLayer);
-        thisMain.map.addLayer(newIsoLayer);
-        //thisMain.map.setLayerIndex(isoLayer, -2);
-        thisMain.isoLayer = newIsoLayer;
-        console.log(this.map.getProjectionObject());
-        console.log(this.map.getExtent());
-        console.log(newIsoLayer);
+//        if (thisMain.isoLayer != null)
+//        	this.map.removeLayer(thisMain.isoLayer);
+//        thisMain.map.addLayer(newIsoLayer);
+//        //thisMain.map.setLayerIndex(isoLayer, -2);
+//        thisMain.isoLayer = newIsoLayer;
+//        //console.log(this.map.getProjectionObject());
+//        //console.log(this.map.getExtent());
+//        console.log(newIsoLayer);
+//        console.log(newIsoLayer.getFullRequestString());
+        thisMain.isoLayer.mergeNewParams( {
+        	DIM_ORIGINLON : this.currentLocation.lon,
+        	DIM_ORIGINLAT : this.currentLocation.lat } );
+        console.log(thisMain.isoLayer);
+        console.log(thisMain.isoLayer.getFullRequestString());
     },
 
     locationUpdated : function() {
         this.locationField.setValue(this.currentLocation.lat + "," + this.currentLocation.lon);
+        this.map.setCenter(this.currentLocation.transform(
+                new OpenLayers.Projection("EPSG:4326"),
+                this.map.getProjectionObject()), 10);
         this.isoQuery(0, false);
     },
     
