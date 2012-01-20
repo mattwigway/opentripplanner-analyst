@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import com.sun.jersey.spi.resource.Singleton;
 
-//@Path("raster")
+@Path("raster")
 @Singleton
 public class Raster {
     
@@ -47,7 +47,7 @@ public class Raster {
         File graphFile = new File("/home/syncopate/otp_data/pdx/Graph.obj");
         Graph graph;
         try {
-            graph = Graph.load(graphFile, Graph.LoadLevel.FULL);
+            graph = Graph.load(this.getClass().getClassLoader(), graphFile, Graph.LoadLevel.FULL);
             GraphServiceImpl graphService = new GraphServiceImpl();
             graphService.setGraph(graph);
             VertexRaster.setGraph(graph);    
