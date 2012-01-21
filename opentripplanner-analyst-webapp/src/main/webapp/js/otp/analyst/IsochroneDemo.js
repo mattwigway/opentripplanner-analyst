@@ -158,7 +158,8 @@ otp.analyst.IsochroneDemo = {
         // create the viewport
         new Ext.Viewport({
             layout: 'border',
-            items: [ controlsPanel, mapPanel]
+            //items: [ controlsPanel, mapPanel]
+        	items: [ mapPanel ]
         });
                 
         this.map.setCenter(initLocationProj, 10);
