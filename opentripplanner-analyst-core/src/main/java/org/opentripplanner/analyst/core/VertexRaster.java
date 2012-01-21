@@ -94,9 +94,9 @@ public class VertexRaster {
         double maxLat2 = maxLat + latPitch/2;
         double maxLon2 = minLon2 + widthPixels * lonPitch + lonPitch;
         double minLat2 = maxLat2 - heightPixels * latPitch - latPitch;
-        LOG.debug("{} {}", minLon2, minLat2);
-        LOG.debug("{} {}", maxLon2, maxLat2);
-        LOG.debug("{} {}", widthPixels, heightPixels);
+        LOG.debug("min {} {}", minLon2, minLat2);
+        LOG.debug("max {} {}", maxLon2, maxLat2);
+        LOG.debug("pixels {} {}", widthPixels, heightPixels);
         
         // find representative vertices for each pixel
         this.samples = new ArrayList<Sample>();
