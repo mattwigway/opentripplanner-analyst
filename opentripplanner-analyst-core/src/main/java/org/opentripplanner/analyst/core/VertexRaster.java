@@ -87,9 +87,17 @@ public class VertexRaster {
         double degreesPerMeterLat = heightDegrees / heightMeters;
         this.lonPitch = degreesPerMeterLon * resolutionMeters; 
         this.latPitch = degreesPerMeterLat * resolutionMeters;
-        // actually, sample point should be in the center of the pixel...
         this.widthPixels  = (int) (widthDegrees  / lonPitch);
         this.heightPixels = (int) (heightDegrees / latPitch);
+        // actually, sample point should be in the center of the pixel...
+        double minLon2 = minLon - lonPitch/2;
+        double maxLat2 = maxLat + latPitch/2;
+        double maxLon2 = minLon2 + widthPixels * lonPitch + lonPitch;
+        double minLat2 = maxLat2 - heightPixels * latPitch - latPitch;
+        LOG.debug("{} {}", minLon2, minLat2);
+        LOG.debug("{} {}", maxLon2, maxLat2);
+        LOG.debug("{} {}", widthPixels, heightPixels);
+        
         // find representative vertices for each pixel
         this.samples = new ArrayList<Sample>();
         for (int y=0; y<heightPixels; y++){

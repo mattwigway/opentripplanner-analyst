@@ -182,8 +182,11 @@ otp.analyst.IsochroneDemo = {
                 'Isochrone',
                 url,
                 //this.map.getExtent(),
-                new OpenLayers.Bounds(-123.242146, 45.154576, -122.021497, 45.721398).transform(
-                		new OpenLayers.Projection("EPSG:4326"), this.map.getProjectionObject()),
+                new OpenLayers.Bounds(
+                		-123.24246611947981, 45.15460114752055, 
+                		-122.02166790139921, 45.721622530048585).transform(
+                		new OpenLayers.Projection("EPSG:4326"), 
+                		this.map.getProjectionObject()),
                 new OpenLayers.Size(1904, 1260),
                 options);
         
