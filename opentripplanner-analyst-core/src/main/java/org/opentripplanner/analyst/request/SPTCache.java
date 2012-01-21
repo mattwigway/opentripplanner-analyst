@@ -43,7 +43,7 @@ public class SPTCache {
 
     public static ShortestPathTree get(double lon, double lat, long t) {
         // kludge: Tile happens to have an STRTree in it
-        Vertex v = Tile.vertexNear(lon, lat, 400);
+        Vertex v = null; //Tile.vertexNear(lon, lat, 400);
         T2<Vertex, Long> key = new T2<Vertex, Long>(v, t);
         LOG.debug("request spt for {} {}", v, t);
         ShortestPathTree spt = cache.get(key);
