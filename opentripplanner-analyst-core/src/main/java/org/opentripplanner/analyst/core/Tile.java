@@ -21,6 +21,7 @@ import org.opengis.referencing.operation.MathTransform;
 import org.opentripplanner.analyst.request.TileRequest;
 import org.opentripplanner.common.IterableLibrary;
 import org.opentripplanner.routing.core.State;
+import org.opentripplanner.routing.edgetype.StreetTraversalPermission;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.impl.DistanceLibrary;
@@ -60,6 +61,8 @@ public class Tile {
         // build a spatial index of road geometries (not individual edges)
         index = new STRtree();
         for (TurnVertex tv : IterableLibrary.filter(graph.getVertices(), TurnVertex.class)) {
+            if (! tv.getPermission().allows(StreetTraversalPermission.PEDESTRIAN))
+                continue;
             Geometry geom = tv.getGeometry();
             index.insert(geom.getEnvelopeInternal(), tv);
         }
