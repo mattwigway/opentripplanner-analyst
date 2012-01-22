@@ -113,7 +113,7 @@ public class Tile {
         LOG.debug("finished preparing raster.");
     }
     
-    private int timeToVertex(TurnVertex v, DistanceOp o) {
+    private static int timeToVertex(TurnVertex v, DistanceOp o) {
         if (v == null)
             return -1;
         GeometryLocation[] gl = o.nearestLocations();
@@ -150,10 +150,10 @@ public class Tile {
         LOG.debug("filled in tile image from SPT in {}msec", t1 - t0);
         return image;
     }
-
-    class Sample {
-        int x, y, t0, t1;
-        Vertex v0, v1;
+    
+    public static class Sample {
+        public final int x, y, t0, t1;
+        public final Vertex v0, v1;
         Sample (int x, int y, Vertex v0, int t0, Vertex v1, int t1) {
             this.x = x;
             this.y = y;
@@ -180,7 +180,7 @@ public class Tile {
         }
     }
     
-    public Sample makeSample(int x, int y, double lon, double lat) {
+    public static Sample makeSample(int x, int y, double lon, double lat) {
         Coordinate c = new Coordinate(lon, lat);
         Point p = factory.createPoint(c);
         

@@ -7,6 +7,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.GregorianCalendar;
+import java.util.concurrent.ExecutionException;
+
 import javax.imageio.ImageIO;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -25,15 +27,17 @@ import org.geotools.geometry.Envelope2D;
 import org.opengis.geometry.Envelope;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opentripplanner.analyst.core.Tile;
-import org.opentripplanner.analyst.request.SPTCache;
-import org.opentripplanner.analyst.request.TileCache;
-import org.opentripplanner.analyst.rest.parameter.WMSImageFormat;
+import org.opentripplanner.analyst.request.SPTCacheLoader;
+import org.opentripplanner.analyst.request.SPTRequest;
+import org.opentripplanner.analyst.request.TileCacheLoader;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.impl.GraphServiceImpl;
 import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.LoadingCache;
 import com.sun.jersey.spi.resource.Singleton;
 
 @Path("wms")
@@ -41,6 +45,8 @@ import com.sun.jersey.spi.resource.Singleton;
 public class WebMapService {
     
     private static final Logger LOG = LoggerFactory.getLogger(WebMapService.class);
+    private LoadingCache<SPTRequest, ShortestPathTree> sptCache; 
+    private LoadingCache<GridGeometry2D, Tile> tileCache; 
     
     public WebMapService() {
         File graphFile = new File("/home/syncopate/otp_data/pdx/Graph.obj");
@@ -52,10 +58,18 @@ public class WebMapService {
             GraphServiceImpl graphService = new GraphServiceImpl();
             graphService.setGraph(graph);
             Tile.setGraphService(graphService);
-            SPTCache.setGraphService(graphService);    
+            SPTCacheLoader.setGraphService(graphService);    
         } catch (Exception e) { // IO or class not found
             e.printStackTrace();
         }
+        sptCache = CacheBuilder.newBuilder()
+                .concurrencyLevel(16)
+                .maximumSize(8)
+                .build(new SPTCacheLoader());
+        tileCache = CacheBuilder.newBuilder()
+                .concurrencyLevel(16)
+                .maximumSize(500)
+                .build(new TileCacheLoader());
     }
     
     @GET @Produces("image/*")
@@ -97,37 +111,47 @@ public class WebMapService {
         GridEnvelope2D gridEnvelope = new GridEnvelope2D(0, 0, width, height);
         GridGeometry2D gridGeometry = new GridGeometry2D(gridEnvelope, (Envelope)bbox);
 
+        SPTRequest sptRequest = new SPTRequest(originLon, originLat, time.getTimeInMillis()/1000);
+
         LOG.debug("crs is : {}", crs.getName());
         LOG.debug("bbox is : {}", bbox);
         LOG.debug("grid envelope is : {}", gridEnvelope);
         LOG.debug("search time is : {}", time);
 
-        ShortestPathTree spt = SPTCache.get(originLon, originLat, time.getTimeInMillis()/1000);
-        Tile tile = TileCache.get(gridGeometry);
-        BufferedImage image = tile.generateImage(spt);
-        
-        if (image != null) {
-            final ByteArrayOutputStream out = new ByteArrayOutputStream();
-            try {
-                long t0 = System.currentTimeMillis();
-                ImageIO.write(image, "png", out);
-                final byte[] imgData = out.toByteArray();
-                final InputStream bigInputStream = new ByteArrayInputStream(imgData);
-                long t1 = System.currentTimeMillis();
-                LOG.debug("wrote image in {}msec", (int)(t1-t0));
-                ResponseBuilder rb = Response.ok(bigInputStream);
-                CacheControl cc = new CacheControl();
-                cc.setMaxAge(3600);
-                cc.setNoCache(false);
-                LOG.debug("response image prepared");
-                return rb.cacheControl(cc).build();
-            } catch (final IOException e) {
-                LOG.debug("exception while perparing image : {}", e.getMessage());
-                return Response.noContent().build();
-            }
+        ShortestPathTree spt;
+        Tile tile;
+        try {
+            spt = sptCache.get(sptRequest);
+            tile = tileCache.get(gridGeometry);
+        } catch (ExecutionException ex) {
+            LOG.error("exception while accessing cache: {}", ex.getMessage());
+            return Response.serverError().build();
         }
-        LOG.debug("response image is null");
-        return Response.noContent().build();
+        
+        BufferedImage image = tile.generateImage(spt);
+        if (image == null) {
+            LOG.warn("response image is null");
+            return Response.noContent().build();
+        }
+            
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            long t0 = System.currentTimeMillis();
+            ImageIO.write(image, "png", out);
+            final byte[] imgData = out.toByteArray();
+            final InputStream bigInputStream = new ByteArrayInputStream(imgData);
+            long t1 = System.currentTimeMillis();
+            LOG.debug("wrote image in {}msec", (int)(t1-t0));
+            ResponseBuilder rb = Response.ok(bigInputStream);
+            CacheControl cc = new CacheControl();
+            cc.setMaxAge(3600);
+            cc.setNoCache(false);
+            LOG.debug("response image prepared");
+            return rb.cacheControl(cc).build();
+        } catch (final IOException e) {
+            LOG.error("exception while perparing image : {}", e.getMessage());
+            return Response.serverError().build();
+        }
     }
 
 }
