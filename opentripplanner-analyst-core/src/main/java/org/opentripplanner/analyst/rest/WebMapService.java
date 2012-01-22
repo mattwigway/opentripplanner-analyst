@@ -123,7 +123,8 @@ public class WebMapService {
         try {
             spt = sptCache.get(sptRequest);
             tile = tileCache.get(gridGeometry);
-        } catch (ExecutionException ex) {
+        } catch (Exception ex) {
+            /* this will catch null SPTs for failed searches */
             LOG.error("exception while accessing cache: {}", ex.getMessage());
             return Response.serverError().build();
         }
