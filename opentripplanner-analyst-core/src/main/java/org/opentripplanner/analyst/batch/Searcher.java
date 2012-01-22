@@ -6,7 +6,7 @@ import java.io.PrintStream;
 
 import org.opentripplanner.analyst.batch.aggregator.Aggregator;
 import org.opentripplanner.analyst.batch.aggregator.ThresholdCumulativeAggregator;
-import org.opentripplanner.routing.graph.Graph;
+import org.opentripplanner.routing.core.Graph;
 import org.opentripplanner.routing.core.LowerBoundGraph;
 import org.opentripplanner.routing.impl.GraphServiceImpl;
 

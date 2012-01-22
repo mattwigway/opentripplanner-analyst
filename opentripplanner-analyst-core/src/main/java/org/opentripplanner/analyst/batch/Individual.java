@@ -1,6 +1,6 @@
 package org.opentripplanner.analyst.batch;
 
-import org.opentripplanner.routing.graph.Vertex;
+import org.opentripplanner.routing.core.Vertex;
 
 /**
  * Individual locations that make up Populations for the purpose

@@ -26,7 +26,7 @@ import org.opentripplanner.analyst.request.SPTCacheLoader;
 import org.opentripplanner.analyst.request.SPTRequest;
 import org.opentripplanner.analyst.request.TileCacheLoader;
 import org.opentripplanner.analyst.request.TileRequest;
-import org.opentripplanner.routing.graph.Graph;
+import org.opentripplanner.routing.core.Graph;
 import org.opentripplanner.routing.impl.GraphServiceImpl;
 import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.slf4j.Logger;
