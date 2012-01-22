@@ -14,13 +14,24 @@
 
 var portland = new L.LatLng(45.5191, -122.6745); 
 var map = new L.Map('map', {
-	minZoom : 10,
-	maxZoom : 17
+	minZoom : 09,
+	maxZoom : 18
 });
 
-var osmUrl = 'http://otile3.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png',
-osmAttrib = 'Map data &copy; 2011 OpenStreetMap contributors',
-osmLayer = new L.TileLayer(osmUrl, {maxZoom: 18, attribution: osmAttrib});
+var arrayOSM = ["http://otile1.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png",
+                "http://otile2.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png",
+                "http://otile3.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png",
+                "http://otile4.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png"];
+var arrayAerial = ["http://oatile1.mqcdn.com/naip/{z}/{x}/{y}.png",
+                   "http://oatile2.mqcdn.com/naip/{z}/{x}/{y}.png",
+                   "http://oatile3.mqcdn.com/naip/{z}/{x}/{y}.png",
+                   "http://oatile4.mqcdn.com/naip/{z}/{x}/{y}.png"];
+
+var osmAttrib = 'Map data &copy; 2011 OpenStreetMap contributors';
+var osmLayer = new L.TileLayer(arrayOSM[0], {maxZoom: 18, attribution: osmAttrib});
+
+var aerAttrib = 'Map data &copy; 2011 OpenStreetMap contributors';
+var aerLayer = new L.TileLayer(arrayAerial[0], {maxZoom: 18, attribution: aerAttrib});
 
 var analyst = new L.TileLayer.WMS("http://localhost:8080/opentripplanner-analyst-core/wms", {
     layers: 'test',
@@ -29,7 +40,7 @@ var analyst = new L.TileLayer.WMS("http://localhost:8080/opentripplanner-analyst
     time: "2011-12-06T08:00:00Z",
     DIM_ORIGINLAT: 45.5191, 
     DIM_ORIGINLON: -122.6745,
-    attribution: osmAttrib
+    attribution: osmAttrib,
 });
 
 var refresh = function (ll) {
@@ -44,7 +55,7 @@ map.on('click', function(e) {
 });
 
 map.setView(portland, 13)
-map.addLayer(osmLayer);
+map.addLayer(aerLayer);
 map.addLayer(analyst);
 
 refresh(portland);
