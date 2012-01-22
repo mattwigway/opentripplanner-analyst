@@ -43,7 +43,6 @@ public class VertexRaster {
             DistanceLibrary.metersToDegrees(SEARCH_RADIUS_M);
     
     private static Graph graph;
-    private static HashGrid<Vertex> hashGrid;
     private static STRtree index;
     private static double minLon, minLat, maxLon, maxLat, avgLon, avgLat;
     private static double widthMeters,  heightMeters;
@@ -68,11 +67,6 @@ public class VertexRaster {
         widthDegrees  = maxLon - minLon;
         LOG.debug("graph extent : {}", env);
 
-        // use avglat/lon in making hashgrid
-        hashGrid = new HashGrid<Vertex>(100, 400, 400);
-        for (Vertex v : IterableLibrary.filter(g.getVertices(), StreetVertex.class)) {
-            hashGrid.put(v);
-        }
         // build a spatial index of road geometries (not individual edges)
         index = new STRtree();
         for (TurnVertex tv : IterableLibrary.filter(g.getVertices(), TurnVertex.class)) {
@@ -272,8 +266,11 @@ public class VertexRaster {
         return gridCoverage;
     }
     
-    public Vertex closestVertex(double lon, double lat, double radiusMeters) {
-        return hashGrid.closest(lon, lat, radiusMeters);
+    public Vertex closestVertex(double lon, double lat) {
+        Sample s = makeSample(0, 0, lon, lat);
+        if (s == null)
+            return null;
+        return s.v0;
     }
     
 }

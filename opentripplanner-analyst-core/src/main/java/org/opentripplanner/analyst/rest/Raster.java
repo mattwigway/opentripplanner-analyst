@@ -78,7 +78,7 @@ public class Raster {
         
         GenericDijkstra dijkstra = new GenericDijkstra(options);
         // do not parse date for now
-        Vertex origin = vertexRaster.closestVertex(lon, lat, 400);
+        Vertex origin = vertexRaster.closestVertex(lon, lat);
         State initialState = new State(tripTime, origin, options);
         LOG.debug("initial state: {}", initialState);
             

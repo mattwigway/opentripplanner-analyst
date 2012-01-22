@@ -15,7 +15,6 @@ import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
-import org.geotools.coverage.grid.io.imageio.GeoToolsWriteParams;
 import org.geotools.gce.geotiff.GeoTiffFormat;
 import org.geotools.gce.geotiff.GeoTiffWriteParams;
 import org.geotools.gce.geotiff.GeoTiffWriter;
@@ -29,10 +28,7 @@ import org.opengis.parameter.GeneralParameterValue;
 import org.opengis.parameter.ParameterValueGroup;
 import org.opentripplanner.analyst.core.TravelTimeImageFunction;
 import org.opentripplanner.analyst.core.VertexRaster;
-import org.opentripplanner.common.IterableLibrary;
-import org.opentripplanner.common.geometry.HashGrid;
 import org.opentripplanner.routing.algorithm.GenericDijkstra;
-import org.opentripplanner.routing.algorithm.strategies.SearchTerminationStrategy;
 import org.opentripplanner.routing.algorithm.strategies.SkipTraverseResultStrategy;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.TraverseOptions;
@@ -42,13 +38,11 @@ import org.opentripplanner.routing.impl.GraphServiceImpl;
 import org.opentripplanner.routing.spt.MultiShortestPathTree;
 import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.opentripplanner.routing.spt.ShortestPathTreeFactory;
-import org.opentripplanner.routing.vertextype.StreetVertex;
 
 public class TestRasterAccessibility extends TestCase {
 
     private Graph graph;
     private GraphServiceImpl graphService;
-    private HashGrid<Vertex> hashGrid; 
     private TraverseOptions options;
     private long tripTime;
 
@@ -60,11 +54,6 @@ public class TestRasterAccessibility extends TestCase {
         graphService = new GraphServiceImpl();
         graphService.setGraph(graph);
         VertexRaster.setGraph(graph);
-        
-        hashGrid = new HashGrid<Vertex>(100, 400, 400);
-        for (Vertex v : IterableLibrary.filter(graph.getVertices(), StreetVertex.class)) {
-            hashGrid.put(v);
-        }
         
         // dec 10 2011 5:30pm CET
         tripTime = 1323534600;
