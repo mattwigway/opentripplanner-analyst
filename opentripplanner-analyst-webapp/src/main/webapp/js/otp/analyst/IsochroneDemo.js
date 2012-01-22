@@ -35,7 +35,12 @@ otp.analyst.IsochroneDemo = {
         var thisMain = this;
         this.isoLayer = null;
            
-        this.map = new OpenLayers.Map();
+        var options =   {                                                       
+		   projection: "EPSG:4326"
+        };                                              
+        var map = new OpenLayers.Map( 'map', options );        
+        this.map = map;
+
         var arrayOSM = ["http://otile1.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.png",
                         "http://otile2.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.png",
                         "http://otile3.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.png",
@@ -47,22 +52,25 @@ otp.analyst.IsochroneDemo = {
             
         var baseOSM = new OpenLayers.Layer.OSM("MapQuest-OSM Tiles", arrayOSM);
         var baseAerial = new OpenLayers.Layer.OSM("MapQuest Open Aerial Tiles", arrayAerial);
-        this.map.addLayer(baseOSM);
-        this.map.addLayer(baseAerial);
+        //this.map.addLayer(baseOSM);
+        //this.map.addLayer(baseAerial);
         
+//        console.log(baseOSM.)
         var url = "/opentripplanner-analyst-core/wms";
         var params = { // getmap query string
             layers : "test",
-            //crs : this.map.getProjectionObject(),
+            //srs : "EPSG:4326",
             transparent : true,
-            time : "2011-12-20T12:45:00Z"
+            time : "2011-12-06T08:00:00Z"
         };
         var options = { // openlayers layer options
     		alwaysInRange : true,
-            //'opacity': 0.8, 
-    			visible : true,
+            //opacity : 0.8, 
+    		visible : true,
             isBaseLayer : true,
-            //numZoomLevels : 1
+            //transitionEffect : "resize",
+            singleTile : false,
+            buffer : 0
         };
         var isoLayer = new OpenLayers.Layer.WMS(
                 'Isochrone',
@@ -183,7 +191,7 @@ otp.analyst.IsochroneDemo = {
         // create the viewport
         new Ext.Viewport({
             layout: 'border',
-            items: [ controlsPanel, mapPanel]
+            items: [ controlsPanel, mapPanel ]
         });
                 
         this.map.setCenter(initLocationProj, 10);
@@ -264,9 +272,9 @@ otp.analyst.IsochroneDemo = {
 
     locationUpdated : function() {
         this.locationField.setValue(this.currentLocation.lat + "," + this.currentLocation.lon);
-        this.map.setCenter(this.currentLocation.transform(
-                new OpenLayers.Projection("EPSG:4326"),
-                this.map.getProjectionObject()), 10);
+//        this.map.setCenter(this.currentLocation.transform(
+//                new OpenLayers.Projection("EPSG:4326"),
+//                this.map.getProjectionObject()), 10);
         this.isoQuery(0, false);
     },
     
