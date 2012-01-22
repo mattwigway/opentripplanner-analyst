@@ -20,24 +20,17 @@ import org.slf4j.LoggerFactory;
 public class SPTCache {
 
     private static final Logger LOG = LoggerFactory.getLogger(SPTCache.class);
-    private static Graph graph;
+    private static GraphService graphService;
     private static Map<T2<Vertex, Long>, ShortestPathTree> cache = 
             new HashMap<T2<Vertex, Long>, ShortestPathTree>();
-    private static TraverseOptions options;
     private static HashGrid<Vertex> hashGrid;
     
     private SPTCache() { /* do not instantiate me */ }
     
     // TODO: switch to Spring IOC
     public static void setGraphService(GraphService gs) {
-      graph = gs.getGraph();
-      options = new TraverseOptions();
-      // genericDijkstra asks for a traverseoptions, but state contains one now...
-      options.setCalendarService(gs.getCalendarService());
-      // must set calendar service before setting service days
-      options.setMaxWalkDistance(30000);
-      options.setTransferTable(graph.getTransferTable());
-      
+      graphService = gs;
+      Graph graph = graphService.getGraph();
       hashGrid = new HashGrid<Vertex>(100, 400, 400);
       for (Vertex v : IterableLibrary.filter(graph.getVertices(), StreetVertex.class)) {
           hashGrid.put(v);
@@ -62,9 +55,7 @@ public class SPTCache {
     }
 
     private static ShortestPathTree search(Vertex origin, long t) {
-        LOG.debug("trip time {}", t);
-        TraverseOptions opt = options.clone();
-        opt.setServiceDays(t);
+        TraverseOptions options = getOptions(origin, t);
         State initialState = new State(t, origin, options);
         LOG.debug("initial state: {}", initialState);
         GenericDijkstra dijkstra = new GenericDijkstra(options);
@@ -73,6 +64,18 @@ public class SPTCache {
         long t1 = System.currentTimeMillis();
         LOG.debug("calculated spt in {}msec", (int)(t1-t0));
         return spt;
+    }
+    
+    private static TraverseOptions getOptions(Vertex origin, long t) {
+        Graph graph = graphService.getGraph();
+        TraverseOptions options = new TraverseOptions();
+        // genericDijkstra asks for a traverseoptions, but state contains one now...
+        options.setCalendarService(graphService.getCalendarService());
+        // must set calendar service before setting service days
+        options.setServiceDays(t);
+        options.setMaxWalkDistance(30000);
+        options.setTransferTable(graph.getTransferTable());
+        return options;
     }
 
 }
