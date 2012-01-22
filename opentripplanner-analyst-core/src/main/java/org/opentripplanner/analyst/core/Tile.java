@@ -64,6 +64,7 @@ public class Tile {
             index.insert(geom.getEnvelopeInternal(), tv);
         }
         index.build();
+        LOG.debug("spatial index size: {}", index.size());
     }
     
     /* INSTANCE */
@@ -73,7 +74,7 @@ public class Tile {
     
     public Tile(GridGeometry2D gg) {
         this.gg = gg;
-        // check that gg intersects graph area 
+        // TODO: check that gg intersects graph area 
         this.samples = new ArrayList<Sample>();
         LOG.debug("preparing tile for {}", gg.getEnvelope2D());
         GridEnvelope2D gridEnv = gg.getGridRange2D();
@@ -85,23 +86,26 @@ public class Tile {
             MathTransform tr = CRS.findMathTransform(crs, DefaultGeographicCRS.WGS84);
             // grid coordinate object to be reused for examining each cell 
             GridCoordinates2D coord = new GridCoordinates2D();
-            for (int gy = gridEnv.y, ny = 0; ny < gridEnv.height; ny++, gy++) {
-                if (ny % 100 == 0)
-                    LOG.debug("raster line {} / {}", ny, gridEnv.height);
-                for (int gx = gridEnv.x, nx = 0; nx < gridEnv.width; gx++, nx++) {
+            for (int gy = 0; gy < height; gy++) {
+                if (gy % 100 == 0)
+                    LOG.debug("raster line {} / {}", gy, height);
+                for (int gx = 0; gx < width; gx++) {
                     coord.x = gx;
                     coord.y = gy;
                     // find coordinates for current raster cell in tile CRS
                     DirectPosition sourcePos = gg.gridToWorld(coord);
                     // convert coordinates in tile CRS to WGS84
-                    sourcePos = tr.transform(sourcePos, null);
-                    double lon = sourcePos.getOrdinate(0);
-                    double lat = sourcePos.getOrdinate(1);
-                    Sample s = this.makeSample(nx, ny, lon, lat);
+                    tr.transform(sourcePos, sourcePos);
+                    // default WGS84 order is lat, lon
+                    double lat = sourcePos.getOrdinate(0);
+                    double lon = sourcePos.getOrdinate(1);
+                    // TODO: axes are reversed in the default mathtransform
+                    Sample s = this.makeSample(height - gy - 1, width - gx - 1, lon, lat);
                     if (s != null)
                         samples.add(s);
                 }
             }
+            LOG.debug("number of samples: {}", samples.size()); 
         } catch (Exception e) {
             LOG.error(e.getMessage());
             return;
@@ -139,7 +143,7 @@ public class Tile {
             byte pixel = s.eval(spt);
             if (pixel > 150)
                 continue;
-            int index = s.x + s.y * gg.gridDimensionX;
+            int index = s.x + s.y * width;
             imagePixelData[index] = pixel;
         }
         long t1 = System.currentTimeMillis();
@@ -194,8 +198,6 @@ public class Tile {
         @SuppressWarnings("unchecked")
         List<TurnVertex> vs = (List<TurnVertex>) index.query(env);
         // query always returns a (possibly empty) list, but never null
-//        if (vs == null)
-//            return null;
         
         // find two closest among nearby geometries
         for (TurnVertex v : vs) {
@@ -225,7 +227,6 @@ public class Tile {
             int t0 = timeToVertex(v0, o0);
             int t1 = timeToVertex(v1, o1);
             Sample s = new Sample(x, y, v0, t0, v1, t1);
-            //System.out.printf("sample %d %d %d %s \n", s.x, s.y, s.time, s.vertex);
             return s;
         }
         return null;
