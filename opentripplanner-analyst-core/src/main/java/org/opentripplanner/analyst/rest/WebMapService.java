@@ -30,6 +30,7 @@ import org.opentripplanner.analyst.core.Tile;
 import org.opentripplanner.analyst.request.SPTCacheLoader;
 import org.opentripplanner.analyst.request.SPTRequest;
 import org.opentripplanner.analyst.request.TileCacheLoader;
+import org.opentripplanner.analyst.request.TileRequest;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.impl.GraphServiceImpl;
 import org.opentripplanner.routing.spt.ShortestPathTree;
@@ -46,7 +47,7 @@ public class WebMapService {
     
     private static final Logger LOG = LoggerFactory.getLogger(WebMapService.class);
     private LoadingCache<SPTRequest, ShortestPathTree> sptCache; 
-    private LoadingCache<GridGeometry2D, Tile> tileCache; 
+    private LoadingCache<TileRequest, Tile> tileCache; 
     
     public WebMapService() {
         File graphFile = new File("/home/syncopate/otp_data/pdx/Graph.obj");
@@ -99,7 +100,6 @@ public class WebMapService {
         // MapTileRequest -- includes Graph ref?
         // MapRenderRequest
 
-        LOG.debug("uri {}", uriInfo.getAbsolutePath());
         LOG.debug("params {}", uriInfo.getQueryParameters());
         
         if (originLat == null || originLon == null) {
@@ -108,21 +108,18 @@ public class WebMapService {
         }
         
         bbox.setCoordinateReferenceSystem(crs);
-        GridEnvelope2D gridEnvelope = new GridEnvelope2D(0, 0, width, height);
-        GridGeometry2D gridGeometry = new GridGeometry2D(gridEnvelope, (Envelope)bbox);
-
+        TileRequest tileRequest = new TileRequest(bbox, width, height);
         SPTRequest sptRequest = new SPTRequest(originLon, originLat, time.getTimeInMillis()/1000);
 
-        LOG.debug("crs is : {}", crs.getName());
-        LOG.debug("bbox is : {}", bbox);
-        LOG.debug("grid envelope is : {}", gridEnvelope);
-        LOG.debug("search time is : {}", time);
+        LOG.trace("crs is : {}", crs.getName());
+        LOG.trace("bbox is : {}", bbox);
+        LOG.trace("search time is : {}", time);
 
         ShortestPathTree spt;
         Tile tile;
         try {
             spt = sptCache.get(sptRequest);
-            tile = tileCache.get(gridGeometry);
+            tile = tileCache.get(tileRequest);
         } catch (Exception ex) {
             /* this will catch null SPTs for failed searches */
             LOG.error("exception while accessing cache: {}", ex.getMessage());
@@ -147,7 +144,6 @@ public class WebMapService {
             CacheControl cc = new CacheControl();
             cc.setMaxAge(3600);
             cc.setNoCache(false);
-            LOG.debug("response image prepared");
             return rb.cacheControl(cc).build();
         } catch (final IOException e) {
             LOG.error("exception while perparing image : {}", e.getMessage());

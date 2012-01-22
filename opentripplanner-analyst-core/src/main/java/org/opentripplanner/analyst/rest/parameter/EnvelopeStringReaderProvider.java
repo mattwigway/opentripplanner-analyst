@@ -9,8 +9,6 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.Provider;
 
 import org.geotools.geometry.Envelope2D;
-import org.opengis.geometry.Envelope;
-
 import com.sun.jersey.spi.StringReader;
 import com.sun.jersey.spi.StringReaderProvider;
 
