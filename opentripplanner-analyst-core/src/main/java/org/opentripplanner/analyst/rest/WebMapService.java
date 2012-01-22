@@ -47,7 +47,8 @@ public class WebMapService {
         Graph graph;
         // TODO: switch to Spring IOC
         try {
-            graph = Graph.load(graphFile, Graph.LoadLevel.FULL);
+            graph = Graph.load(this.getClass().getClassLoader(), 
+                    graphFile, Graph.LoadLevel.FULL);
             GraphServiceImpl graphService = new GraphServiceImpl();
             graphService.setGraph(graph);
             Tile.setGraphService(graphService);
@@ -76,8 +77,8 @@ public class WebMapService {
            @QueryParam("TIME") GregorianCalendar time, 
            @QueryParam("ELEVATION") @DefaultValue("0") Float elevation, 
            // Sample dimensions
-           @QueryParam("DIM_ORIGINLON") @DefaultValue("0") Float originLon, 
-           @QueryParam("DIM_ORIGINLAT") @DefaultValue("0") Float originLat,
+           @QueryParam("DIM_ORIGINLON") Float originLon, 
+           @QueryParam("DIM_ORIGINLAT") Float originLat,
            @Context UriInfo uriInfo ) { 
         
         // MapSearchRequest
@@ -87,18 +88,22 @@ public class WebMapService {
         LOG.debug("uri {}", uriInfo.getAbsolutePath());
         LOG.debug("params {}", uriInfo.getQueryParameters());
         
+        if (originLat == null || originLon == null) {
+            LOG.warn("no origin (sample dimension) specified.");
+            return Response.noContent().build();
+        }
+        
         bbox.setCoordinateReferenceSystem(crs);
         GridEnvelope2D gridEnvelope = new GridEnvelope2D(0, 0, width, height);
         GridGeometry2D gridGeometry = new GridGeometry2D(gridEnvelope, (Envelope)bbox);
 
-        LOG.debug("crs is : {}", crs);
+        LOG.debug("crs is : {}", crs.getName());
         LOG.debug("bbox is : {}", bbox);
         LOG.debug("grid envelope is : {}", gridEnvelope);
         LOG.debug("search time is : {}", time);
 
-
+        ShortestPathTree spt = SPTCache.get(originLon, originLat, time.getTimeInMillis()/1000);
         Tile tile = TileCache.get(gridGeometry);
-        ShortestPathTree spt = SPTCache.get(originLon, originLat, time.getTimeInMillis());
         BufferedImage image = tile.generateImage(spt);
         
         if (image != null) {
