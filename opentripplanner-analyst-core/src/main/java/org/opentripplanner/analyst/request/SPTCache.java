@@ -30,14 +30,11 @@ public class SPTCache {
     
     // TODO: switch to Spring IOC
     public static void setGraphService(GraphService gs) {
-      // dec 6 2011 7:45am CET
-      long tripTime = 1323153900;
       graph = gs.getGraph();
       options = new TraverseOptions();
       // genericDijkstra asks for a traverseoptions, but state contains one now...
       options.setCalendarService(gs.getCalendarService());
       // must set calendar service before setting service days
-      options.setServiceDays(tripTime);
       options.setMaxWalkDistance(30000);
       options.setTransferTable(graph.getTransferTable());
       
@@ -47,7 +44,9 @@ public class SPTCache {
       }
     }
 
-    public static ShortestPathTree get(double lon, double lat, long t) {
+    // synchronizing keeps multiple identical searches from starting
+    // but is not a good long-term solution
+    public static synchronized ShortestPathTree get(double lon, double lat, long t) {
         Vertex v = hashGrid.closest(lon, lat, 400);
         T2<Vertex, Long> key = new T2<Vertex, Long>(v, t);
         LOG.debug("request spt for {} {}", v, t);
@@ -63,7 +62,10 @@ public class SPTCache {
     }
 
     private static ShortestPathTree search(Vertex origin, long t) {
-        State initialState = new State(t/1000, origin, options);
+        LOG.debug("trip time {}", t);
+        TraverseOptions opt = options.clone();
+        opt.setServiceDays(t);
+        State initialState = new State(t, origin, options);
         LOG.debug("initial state: {}", initialState);
         GenericDijkstra dijkstra = new GenericDijkstra(options);
         long t0 = System.currentTimeMillis();
