@@ -1,4 +1,6 @@
-package org.opentripplanner.analyst.core;
+package org.opentripplanner.analyst.batch.aggregator;
+
+import org.opentripplanner.analyst.batch.Population;
 
 /**
  * An interface for classes that provide an aggregate function over populations

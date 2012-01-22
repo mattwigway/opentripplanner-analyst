@@ -1,9 +1,11 @@
-package org.opentripplanner.analyst.core;
+package org.opentripplanner.analyst.batch;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 
+import org.opentripplanner.analyst.batch.aggregator.Aggregator;
+import org.opentripplanner.analyst.batch.aggregator.ThresholdCumulativeAggregator;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.core.LowerBoundGraph;
 import org.opentripplanner.routing.impl.GraphServiceImpl;

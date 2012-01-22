@@ -1,4 +1,4 @@
-package org.opentripplanner.analyst.core;
+package org.opentripplanner.analyst.batch;
 
 import org.opentripplanner.routing.graph.Vertex;
 
@@ -10,10 +10,10 @@ import org.opentripplanner.routing.graph.Vertex;
  *
  */
 public class Individual {
-	double x, y;
-	double data;
-	double result;
-	Vertex vertex;
+	public final double x, y;
+	public double data;
+	public double result;
+	public Vertex vertex;
 	
 	public Individual(double x, double y, double data) {
 		this.x = x;

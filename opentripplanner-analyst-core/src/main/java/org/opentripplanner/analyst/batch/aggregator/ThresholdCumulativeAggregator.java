@@ -1,4 +1,7 @@
-package org.opentripplanner.analyst.core;
+package org.opentripplanner.analyst.batch.aggregator;
+
+import org.opentripplanner.analyst.batch.Individual;
+import org.opentripplanner.analyst.batch.Population;
 
 /**
  * An aggregator that approximates the integral of a cumulative opportunity

@@ -1,4 +1,4 @@
-package org.opentripplanner.analyst.core;
+package org.opentripplanner.analyst.batch;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -35,7 +35,7 @@ import com.vividsolutions.jts.index.strtree.STRtree;
  */
 public class Population {
     // private static Logger LOG = LoggerFactory.getLogger(Population.class);
-    List<Individual> elements;
+    public List<Individual> elements;
 
     public Population() {
         elements = new ArrayList<Individual>();

@@ -1,4 +1,4 @@
-package org.opentripplanner.analyst.core;
+package org.opentripplanner.analyst.batch;
 
 import java.io.File;
 import java.io.PrintWriter;
