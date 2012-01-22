@@ -7,8 +7,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.GregorianCalendar;
-import java.util.concurrent.ExecutionException;
-
 import javax.imageio.ImageIO;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -21,10 +19,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
 
-import org.geotools.coverage.grid.GridEnvelope2D;
-import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.geometry.Envelope2D;
-import org.opengis.geometry.Envelope;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opentripplanner.analyst.core.Tile;
 import org.opentripplanner.analyst.request.SPTCacheLoader;

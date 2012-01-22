@@ -105,12 +105,11 @@ public class Tile {
                         samples.add(s);
                 }
             }
-            LOG.debug("number of samples: {}", samples.size()); 
+            LOG.debug("finished preparing tile. number of samples: {}", samples.size()); 
         } catch (Exception e) {
             LOG.error(e.getMessage());
             return;
         }
-        LOG.debug("finished preparing raster.");
     }
     
     private static int timeToVertex(TurnVertex v, DistanceOp o) {
