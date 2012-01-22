@@ -48,13 +48,13 @@ var refresh = function (ll) {
     analyst.wmsParams.DIM_ORIGINLAT = ll.lat;
     analyst.wmsParams.DIM_ORIGINLON = ll.lng;
     map.addLayer(analyst);
-}
+};
 
 map.on('click', function(e) {
 	refresh(e.latlng);
 });
 
-map.setView(portland, 13)
+map.setView(portland, 13);
 map.addLayer(aerLayer);
 map.addLayer(analyst);
 
