@@ -71,21 +71,21 @@ public class WebMapService {
     @GET @Produces("image/*")
     public Response wmsGet(
            // Mandatory parameters
-           @QueryParam("VERSION") String  version,
-           @QueryParam("REQUEST") String  request,
-           @QueryParam("LAYERS")  String  layers, 
-           @QueryParam("STYLES")  String  styles, 
-           @QueryParam("SRS")     CoordinateReferenceSystem crs,
-           @QueryParam("BBOX")    Envelope2D bbox, 
-           @QueryParam("WIDTH")   int width, 
-           @QueryParam("HEIGHT")  int height, 
-           @QueryParam("FORMAT")  String format,
+           @QueryParam("version") String  version,
+           @QueryParam("request") String  request,
+           @QueryParam("layers")  String  layers, 
+           @QueryParam("styles")  String  styles, 
+           @QueryParam("srs")     CoordinateReferenceSystem srs,
+           @QueryParam("bbox")    Envelope2D bbox, 
+           @QueryParam("width")   int width, 
+           @QueryParam("height")  int height, 
+           @QueryParam("format")  String format,
            // Optional parameters
-           @QueryParam("TRANSPARENT") @DefaultValue("false") Boolean transparent,
-           @QueryParam("BGCOLOR") @DefaultValue("0xFFFFFF") String bgcolor,
-           @QueryParam("EXCEPTIONS") @DefaultValue("XML") String exceptions,
-           @QueryParam("TIME") GregorianCalendar time, 
-           @QueryParam("ELEVATION") @DefaultValue("0") Float elevation, 
+           @QueryParam("transparent") @DefaultValue("false") Boolean transparent,
+           @QueryParam("bgcolor") @DefaultValue("0xFFFFFF") String bgcolor,
+           @QueryParam("exceptions") @DefaultValue("XML") String exceptions,
+           @QueryParam("time") GregorianCalendar time, 
+           @QueryParam("elevation") @DefaultValue("0") Float elevation, 
            // Sample dimensions
            @QueryParam("DIM_ORIGINLON") Float originLon, 
            @QueryParam("DIM_ORIGINLAT") Float originLat,
@@ -102,13 +102,13 @@ public class WebMapService {
             return Response.noContent().build();
         }
         
-        bbox.setCoordinateReferenceSystem(crs);
+//        LOG.debug("srs is : {}", srs.getName());
+//        LOG.debug("bbox is : {}", bbox);
+//        LOG.debug("search time is : {}", time);
+
+        bbox.setCoordinateReferenceSystem(srs);
         TileRequest tileRequest = new TileRequest(bbox, width, height);
         SPTRequest sptRequest = new SPTRequest(originLon, originLat, time.getTimeInMillis()/1000);
-
-        LOG.trace("crs is : {}", crs.getName());
-        LOG.trace("bbox is : {}", bbox);
-        LOG.trace("search time is : {}", time);
 
         ShortestPathTree spt;
         Tile tile;

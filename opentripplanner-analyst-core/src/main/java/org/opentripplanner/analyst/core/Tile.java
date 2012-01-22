@@ -95,12 +95,14 @@ public class Tile {
                     // find coordinates for current raster cell in tile CRS
                     DirectPosition sourcePos = gg.gridToWorld(coord);
                     // convert coordinates in tile CRS to WGS84
+                    //LOG.debug("world : {}", sourcePos);
                     tr.transform(sourcePos, sourcePos);
-                    // default WGS84 order is lat, lon
-                    double lat = sourcePos.getOrdinate(0);
-                    double lon = sourcePos.getOrdinate(1);
+                    //LOG.debug("wgs84 : {}", sourcePos);
+                    // axis order can vary
+                    double lon = sourcePos.getOrdinate(0);
+                    double lat = sourcePos.getOrdinate(1);
                     // TODO: axes are reversed in the default mathtransform
-                    Sample s = makeSample(height - gy - 1, width - gx - 1, lon, lat);
+                    Sample s = makeSample(gx, gy, lon, lat);
                     if (s != null)
                         samples.add(s);
                 }

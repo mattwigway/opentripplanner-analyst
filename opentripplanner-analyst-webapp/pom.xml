@@ -17,6 +17,7 @@
 
     <build>
         <finalName>opentripplanner-analyst-webapp</finalName>
+        <!-- 
         <plugins>
             <plugin>
                 <groupId>ro.isdc.wro4j</groupId>
@@ -37,5 +38,6 @@
                 </configuration>
             </plugin>
         </plugins>
+         -->
     </build>
 </project>

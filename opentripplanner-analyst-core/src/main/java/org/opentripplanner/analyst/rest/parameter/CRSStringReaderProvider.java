@@ -30,7 +30,7 @@ public class CRSStringReaderProvider implements StringReaderProvider {
 
     private static class CRSStringReader implements StringReader<CoordinateReferenceSystem> {
 
-        private static CRSAuthorityFactory factory = CRS.getAuthorityFactory(false);
+        private static CRSAuthorityFactory factory = CRS.getAuthorityFactory(false); // TRUE?
         
         @Override
         public CoordinateReferenceSystem fromString(String crsName) {
