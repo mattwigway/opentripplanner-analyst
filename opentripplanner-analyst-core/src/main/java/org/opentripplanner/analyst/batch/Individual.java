@@ -1,6 +1,7 @@
 package org.opentripplanner.analyst.batch;
 
-import org.opentripplanner.routing.core.Vertex;
+import org.opentripplanner.analyst.core.Tile;
+import org.opentripplanner.analyst.core.Tile.Sample;
 
 /**
  * Individual locations that make up Populations for the purpose
@@ -10,16 +11,22 @@ import org.opentripplanner.routing.core.Vertex;
  *
  */
 public class Individual {
-	public final double x, y;
-	public double data;
-	public double result;
-	public Vertex vertex;
-	
-	public Individual(double x, double y, double data) {
-		this.x = x;
-		this.y = y;
-		this.data = data;
-		this.vertex = null;
-		this.result = Double.NaN;
-	}
+
+    public final String id;
+    public final Sample sample;
+    public double data;
+    
+    public Individual(String id, Sample sample, double data) {
+        this.id = id;
+        this.sample = sample;
+        this.data = data;
+    }
+
+    public Individual(String id, double lon, double lat, double data) {
+        Sample sample = Tile.makeSample(0, 0, lon, lat);
+        this.id = id;
+        this.sample = sample;
+        this.data = data;
+    }
+    
 }
