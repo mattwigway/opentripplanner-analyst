@@ -40,7 +40,10 @@ public class Population {
         return ret;
     }
 
-    public static Population fromShapefile(String filename, String attribute) {
+    public static Population fromShapefile(
+            String filename, 
+            String idAttribute, 
+            String dataAttribute) {
         Population population = new Population();
         System.out.printf("Loading field '%s' from shapefile %s\n", attribute, filename);
         try {
@@ -76,9 +79,10 @@ public class Population {
                     throw new IllegalStateException(
                             "Shapefile must contain either points or polygons.");
                 }
-                double data = (Double) feature.getAttribute(attribute);
-                // System.out.printf("%5.2f\t%s\n", data, point.toString());
-                Individual individual = new Individual(point.getX(), point.getY(), data);
+                String id = (String) feature.getAttribute(idAttribute);
+                double data = (Double) feature.getAttribute(dataAttribute);
+                Individual individual = new Individual(
+                        id, point.getX(), point.getY(), data);
                 population.individuals.add(individual);
                 i++;
             }
