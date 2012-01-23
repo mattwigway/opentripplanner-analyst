@@ -45,7 +45,8 @@ public class Population {
             String idAttribute, 
             String dataAttribute) {
         Population population = new Population();
-        System.out.printf("Loading field '%s' from shapefile %s\n", attribute, filename);
+        LOG.debug("Loading population from shapefile {}", filename);
+        LOG.debug("Feature attributes: id in {}, data in {}", idAttribute, dataAttribute);
         try {
             File file = new File(filename);
             FileDataStore store = FileDataStoreFinder.getDataStore(file);
@@ -56,8 +57,7 @@ public class Population {
             Hints hints = new Hints(Hints.FORCE_LONGITUDE_FIRST_AXIS_ORDER, Boolean.TRUE);
             CRSAuthorityFactory factory = ReferencingFactoryFinder.getCRSAuthorityFactory("EPSG",
                     hints);
-            CoordinateReferenceSystem worldCRS = factory
-                    .createCoordinateReferenceSystem("EPSG:4326");
+            CoordinateReferenceSystem worldCRS = factory.createCoordinateReferenceSystem("EPSG:4326");
 
             DefaultQuery query = new DefaultQuery();
             query.setCoordinateSystem(sourceCRS);
@@ -76,8 +76,7 @@ public class Population {
                 } else if (geom instanceof Polygon) {
                     point = ((Polygon) geom).getCentroid();
                 } else {
-                    throw new IllegalStateException(
-                            "Shapefile must contain either points or polygons.");
+                    throw new IllegalStateException("Shapefile must contain either points or polygons.");
                 }
                 String id = (String) feature.getAttribute(idAttribute);
                 double data = (Double) feature.getAttribute(dataAttribute);
@@ -90,14 +89,13 @@ public class Population {
         } catch (Exception ex) {
             throw new IllegalStateException("Error loading population from shapefile ", ex);
         }
-
-        System.out.printf("Done loading shapefile.\n");
+        LOG.debug("Done loading shapefile.");
         return population;
     }
 
     public void dump() {
         for (Individual i : individuals) {
-            System.out.printf("%s %f %f\n", i.vertex, i.data, i.result);
+            System.out.printf("\n");
         }
     }
     
