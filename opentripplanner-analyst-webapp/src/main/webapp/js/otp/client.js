@@ -38,9 +38,7 @@ var analyst = new L.TileLayer.WMS("http://localhost:8080/opentripplanner-analyst
     format: 'image/png',
     transparent: true,
     time: "2011-12-06T08:00:00Z",
-    DIM_ORIGINLAT: 45.5191, 
-    DIM_ORIGINLON: -122.6745,
-    attribution: osmAttrib,
+    attribution: osmAttrib
 });
 
 var refresh = function (ll) {
