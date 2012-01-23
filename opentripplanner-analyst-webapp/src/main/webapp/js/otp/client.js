@@ -41,6 +41,11 @@ var analyst = new L.TileLayer.WMS("http://localhost:8080/opentripplanner-analyst
     attribution: osmAttrib
 });
 
+//var analystTile = new L.TileLayer(
+//	"http://localhost:8080/opentripplanner-analyst-core/tile/2011-12-06T08:00:00Z/-122.6745/45.5191/{z}/{x}/{y}.png", 
+//	{ attribution: osmAttrib }
+//);
+
 var refresh = function (ll) {
 	map.removeLayer(analyst);
     analyst.wmsParams.DIM_ORIGINLAT = ll.lat;
