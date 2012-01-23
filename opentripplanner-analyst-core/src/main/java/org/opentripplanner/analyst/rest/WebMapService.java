@@ -60,11 +60,11 @@ public class WebMapService {
         }
         sptCache = CacheBuilder.newBuilder()
                 .concurrencyLevel(16)
-                .maximumSize(8)
+                .maximumSize(4)
                 .build(new SPTCacheLoader());
         tileCache = CacheBuilder.newBuilder()
                 .concurrencyLevel(16)
-                .maximumSize(500)
+                .softValues()
                 .build(new TileCacheLoader());
     }
     
