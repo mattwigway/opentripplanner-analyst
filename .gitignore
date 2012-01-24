@@ -4,3 +4,4 @@ opentripplanner-analyst-webapp/target/
 .classpath
 .project
 .settings
+opentripplanner-analyst-core/src/main/resources/data-sources.xml

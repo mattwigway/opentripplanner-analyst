@@ -3,10 +3,10 @@ package org.opentripplanner.analyst.rest;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.GregorianCalendar;
+
 import javax.imageio.ImageIO;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -22,50 +22,53 @@ import javax.ws.rs.core.UriInfo;
 import org.geotools.geometry.Envelope2D;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opentripplanner.analyst.core.Tile;
+import org.opentripplanner.analyst.core.TileFactory;
 import org.opentripplanner.analyst.request.SPTCacheLoader;
 import org.opentripplanner.analyst.request.SPTRequest;
 import org.opentripplanner.analyst.request.TileCacheLoader;
 import org.opentripplanner.analyst.request.TileRequest;
-import org.opentripplanner.routing.core.Graph;
-import org.opentripplanner.routing.impl.GraphServiceImpl;
+import org.opentripplanner.routing.services.GraphService;
 import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Required;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
+import com.sun.jersey.api.spring.Autowire;
 import com.sun.jersey.spi.resource.Singleton;
 
 @Path("wms")
 @Singleton
+@Autowire
 public class WebMapService {
     
     private static final Logger LOG = LoggerFactory.getLogger(WebMapService.class);
     private LoadingCache<SPTRequest, ShortestPathTree> sptCache; 
-    private LoadingCache<TileRequest, Tile> tileCache; 
+    private LoadingCache<TileRequest, Tile> tileCache;
+    private TileFactory tileFactory = new TileFactory();
+    SPTCacheLoader cacheLoader = new SPTCacheLoader();
     
-    public WebMapService() {
-        File graphFile = new File("/home/syncopate/otp_data/pdx/Graph.obj");
-        Graph graph;
-        // TODO: switch to Spring IOC
-        try {
-            graph = Graph.load(this.getClass().getClassLoader(), 
-                    graphFile, Graph.LoadLevel.FULL);
-            GraphServiceImpl graphService = new GraphServiceImpl();
-            graphService.setGraph(graph);
-            Tile.setGraphService(graphService);
-            SPTCacheLoader.setGraphService(graphService);    
-        } catch (Exception e) { // IO or class not found
-            e.printStackTrace();
+    @Autowired
+    @Required
+    public void setGraphService(GraphService graphService) {
+        System.out.println("cache loader");
+        tileFactory.setGraphService(graphService);
+        cacheLoader.setGraphService(graphService);
+    }
+
+    public void ensureCachesInitialized() {
+        if (sptCache == null) {
+            sptCache = CacheBuilder.newBuilder()
+                    .concurrencyLevel(16)
+                    .maximumSize(4)
+                    .build(cacheLoader);
+            tileCache = CacheBuilder.newBuilder()
+                    .concurrencyLevel(16)
+                    .softValues()
+                    .build(new TileCacheLoader(tileFactory));
         }
-        sptCache = CacheBuilder.newBuilder()
-                .concurrencyLevel(16)
-                .maximumSize(4)
-                .build(new SPTCacheLoader());
-        tileCache = CacheBuilder.newBuilder()
-                .concurrencyLevel(16)
-                .softValues()
-                .build(new TileCacheLoader());
     }
     
     @GET @Produces("image/*")
@@ -91,6 +94,7 @@ public class WebMapService {
            @QueryParam("DIM_ORIGINLAT") Float originLat,
            @Context UriInfo uriInfo ) { 
         
+        ensureCachesInitialized();
         // MapSearchRequest
         // MapTileRequest -- includes Graph ref?
         // MapRenderRequest
@@ -118,7 +122,8 @@ public class WebMapService {
         } catch (Exception ex) {
             /* this will catch null SPTs for failed searches */
             LOG.error("exception while accessing cache: {}", ex.getMessage());
-            return Response.serverError().build();
+            throw new RuntimeException(ex);
+            //return Response.serverError().build();
         }
         
         BufferedImage image = tile.generateImage(spt);

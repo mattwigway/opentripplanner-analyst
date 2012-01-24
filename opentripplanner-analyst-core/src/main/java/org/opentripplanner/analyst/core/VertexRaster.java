@@ -6,17 +6,17 @@ import java.awt.image.IndexColorModel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.geometry.Envelope2D;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
-import org.opentripplanner.common.IterableLibrary;
-import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.Graph;
+import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.Vertex;
+import org.opentripplanner.routing.edgetype.StreetVertex;
 import org.opentripplanner.routing.impl.DistanceLibrary;
 import org.opentripplanner.routing.spt.ShortestPathTree;
-import org.opentripplanner.routing.edgetype.StreetVertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +26,6 @@ import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.index.strtree.STRtree;
 import com.vividsolutions.jts.linearref.LinearLocation;
 import com.vividsolutions.jts.linearref.LocationIndexedLine;
 import com.vividsolutions.jts.operation.distance.DistanceOp;
@@ -39,19 +38,17 @@ public class VertexRaster {
     private static final double SEARCH_RADIUS_M = 200; // meters
     private static final double SEARCH_RADIUS_DEG = 
             DistanceLibrary.metersToDegrees(SEARCH_RADIUS_M);
-    
-    private static Graph graph;
-    private static STRtree index;
-    private static double minLon, minLat, maxLon, maxLat, avgLon, avgLat;
-    private static double widthMeters,  heightMeters;
-    private static double widthDegrees, heightDegrees;
     private static final IndexColorModel DEFAULT_COLOR_MAP = getDefaultColorMap();
-    
     private static final GeometryFactory factory = new GeometryFactory();
 
-    // this should really be handled by graph-specific VertexRasterFactories not global state
-    public static void setGraph(Graph g) {
+    private Graph graph;
+    private double minLon, minLat, maxLon, maxLat, avgLon, avgLat;
+    private double widthMeters,  heightMeters;
+    private double widthDegrees, heightDegrees;
+
+    private void setGraph(Graph g) {
         graph = g;
+        GeometryIndex.ensureIndexed(graph);
         com.vividsolutions.jts.geom.Envelope env = graph.getExtent();
         minLon = env.getMinX();
         maxLon = env.getMaxX();
@@ -65,13 +62,6 @@ public class VertexRaster {
         widthDegrees  = maxLon - minLon;
         LOG.debug("graph extent : {}", env);
 
-        // build a spatial index of road geometries (not individual edges)
-        index = new STRtree();
-        for (StreetVertex tv : IterableLibrary.filter(g.getVertices(), StreetVertex.class)) {
-            Geometry geom = tv.getGeometry();
-            index.insert(geom.getEnvelopeInternal(), tv);
-        }
-        index.build();
     }
     
     /* INSTANCE */
@@ -80,7 +70,8 @@ public class VertexRaster {
     final int widthPixels, heightPixels;
     List<Sample> samples = new ArrayList<Sample>();
     
-    public VertexRaster(double resolutionMeters) {
+    public VertexRaster(Graph graph, double resolutionMeters) {
+        setGraph(graph);
         LOG.debug("preparing raster...");
         this.resolutionMeters = resolutionMeters;
         double degreesPerMeterLon = widthDegrees / widthMeters;
@@ -189,11 +180,10 @@ public class VertexRaster {
         // query
         Envelope env = new Envelope(c);
         env.expandBy(SEARCH_RADIUS_DEG, SEARCH_RADIUS_DEG);
+
+        GeometryIndexService index = graph.getService(GeometryIndexService.class);
         @SuppressWarnings("unchecked")
         List<StreetVertex> vs = (List<StreetVertex>) index.query(env);
-        // query always returns a (possibly empty) list, but never null
-//        if (vs == null)
-//            return null;
         
         // find two closest among nearby geometries
         for (StreetVertex v : vs) {

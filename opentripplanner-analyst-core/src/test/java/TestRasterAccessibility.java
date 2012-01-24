@@ -30,11 +30,12 @@ import org.opentripplanner.analyst.core.TravelTimeImageFunction;
 import org.opentripplanner.analyst.core.VertexRaster;
 import org.opentripplanner.routing.algorithm.GenericDijkstra;
 import org.opentripplanner.routing.algorithm.strategies.SkipTraverseResultStrategy;
+import org.opentripplanner.routing.core.Graph;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.TraverseOptions;
-import org.opentripplanner.routing.core.Graph;
 import org.opentripplanner.routing.core.Vertex;
 import org.opentripplanner.routing.impl.GraphServiceImpl;
+import org.opentripplanner.routing.services.GraphService;
 import org.opentripplanner.routing.spt.MultiShortestPathTree;
 import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.opentripplanner.routing.spt.ShortestPathTreeFactory;
@@ -48,12 +49,14 @@ public class TestRasterAccessibility extends TestCase {
 
     @Before
     public void setUp() throws Exception {
-        // handle this with a graphservice
-        File graphFile = new File("/home/syncopate/otp_data/pdx/Graph.obj");
-        graph = Graph.load(graphFile, Graph.LoadLevel.FULL);
+        graph = ArtificialGraphGenerator.generateGridGraph();
         graphService = new GraphServiceImpl();
         graphService.setGraph(graph);
-        VertexRaster.setGraph(graph);
+        setGraphService(graphService);
+    }
+
+    public void setGraphService(GraphService service) {
+        graph = service.getGraph();
         
         // dec 10 2011 5:30pm CET
         tripTime = 1323534600;
@@ -69,7 +72,7 @@ public class TestRasterAccessibility extends TestCase {
 
     @Test
     public void testVertexRaster() throws Exception {
-        VertexRaster raster = new VertexRaster(100);
+        VertexRaster raster = new VertexRaster(graph, 100);
         GenericDijkstra dijkstra = new GenericDijkstra(options);
         dijkstra.setShortestPathTreeFactory(new DijkstraOptions());
         dijkstra.setSkipTraverseResultStrategy(new DijkstraOptions());
