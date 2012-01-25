@@ -19,15 +19,12 @@ import org.opengis.geometry.DirectPosition;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
 import org.opentripplanner.analyst.request.TileRequest;
-import org.opentripplanner.common.IterableLibrary;
-import org.opentripplanner.routing.core.State;
-import org.opentripplanner.routing.edgetype.StreetTraversalPermission;
 import org.opentripplanner.routing.core.Graph;
+import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.Vertex;
-import org.opentripplanner.routing.impl.DistanceLibrary;
-import org.opentripplanner.routing.services.GraphService;
-import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.opentripplanner.routing.edgetype.StreetVertex;
+import org.opentripplanner.routing.impl.DistanceLibrary;
+import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +34,6 @@ import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.index.strtree.STRtree;
 import com.vividsolutions.jts.linearref.LinearLocation;
 import com.vividsolutions.jts.linearref.LocationIndexedLine;
 import com.vividsolutions.jts.operation.distance.DistanceOp;
@@ -47,35 +43,24 @@ public class Tile {
 
     /* STATIC */
     private static final Logger LOG = LoggerFactory.getLogger(Tile.class);
-    private static Graph graph;
-    private static STRtree index;
     private static final IndexColorModel DEFAULT_COLOR_MAP = getDefaultColorMap();
     private static final GeometryFactory factory = new GeometryFactory();
     private static final double SEARCH_RADIUS_M = 100; // meters
     private static final double SEARCH_RADIUS_DEG = 
             DistanceLibrary.metersToDegrees(SEARCH_RADIUS_M);
-
-    // this should really be handled by graph-specific TileFactories not global state
-    public static void setGraphService(GraphService gs) {
-        graph = gs.getGraph();
-        // build a spatial index of road geometries (not individual edges)
-        index = new STRtree();
-        for (StreetVertex tv : IterableLibrary.filter(graph.getVertices(), StreetVertex.class)) {
-            if (! tv.getPermission().allows(StreetTraversalPermission.PEDESTRIAN))
-                continue;
-            Geometry geom = tv.getGeometry();
-            index.insert(geom.getEnvelopeInternal(), tv);
-        }
-        index.build();
-        LOG.debug("spatial index size: {}", index.size());
-    }
     
     /* INSTANCE */
+
+    private Graph graph;
+    private GeometryIndex index;
     final GridGeometry2D gg;
     final int width, height;
     List<Sample> samples = new ArrayList<Sample>();
     
-    public Tile(TileRequest req) {
+    Tile(TileRequest req, Graph graph, GeometryIndex index) {
+        this.graph = graph;
+        this.index = index;
+
         GridEnvelope2D gridEnv = new GridEnvelope2D(0, 0, req.width, req.height);
         this.gg = new GridGeometry2D(gridEnv, (org.opengis.geometry.Envelope)(req.bbox));
         // TODO: check that gg intersects graph area 
@@ -184,7 +169,7 @@ public class Tile {
         }
     }
     
-    public static Sample makeSample(int x, int y, double lon, double lat) {
+    public Sample makeSample(int x, int y, double lon, double lat) {
         Coordinate c = new Coordinate(lon, lat);
         Point p = factory.createPoint(c);
         
@@ -259,6 +244,7 @@ public class Tile {
         return new IndexColorModel(8, 256, r, g, b, a);
     }
 
+    @SuppressWarnings("unused")
     private static IndexColorModel getAlternateColorMap() {
         byte[] r = new byte[256];
         byte[] g = new byte[256];
@@ -298,5 +284,4 @@ public class Tile {
                 "isochrone", image, graphRange);
         return gridCoverage;
     }
-    
 }

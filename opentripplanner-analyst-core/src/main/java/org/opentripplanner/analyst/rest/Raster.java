@@ -4,7 +4,6 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -13,25 +12,23 @@ import java.util.List;
 
 import javax.imageio.ImageIO;
 import javax.ws.rs.GET;
-import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
+import org.opentripplanner.analyst.core.GeometryIndex;
 import org.opentripplanner.analyst.core.VertexRaster;
 import org.opentripplanner.routing.algorithm.GenericDijkstra;
+import org.opentripplanner.routing.core.Graph;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.TraverseOptions;
-import org.opentripplanner.routing.core.Graph;
 import org.opentripplanner.routing.core.Vertex;
-import org.opentripplanner.routing.impl.GraphServiceImpl;
+import org.opentripplanner.routing.services.GraphService;
 import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.sun.jersey.spi.resource.Singleton;
 
 //@Path("raster")
 //@Singleton
@@ -43,31 +40,22 @@ public class Raster {
     private TraverseOptions options;
     private long tripTime;
     
-    public Raster() {
-        File graphFile = new File("/home/syncopate/otp_data/pdx/Graph.obj");
-        Graph graph;
-        try {
-            graph = Graph.load(graphFile, Graph.LoadLevel.FULL);
-            GraphServiceImpl graphService = new GraphServiceImpl();
-            graphService.setGraph(graph);
-            VertexRaster.setGraph(graph);    
-            vertexRaster = new VertexRaster(50);
-            vertices = new ArrayList<Vertex>(graph.getVertices());
-            Collections.shuffle(vertices);
+    public void setGraphService(GraphService graphService) {
+        Graph graph = graphService.getGraph();
+        GeometryIndex.ensureIndexed(graph);
+        vertexRaster = new VertexRaster(graph, 50);
+        vertices = new ArrayList<Vertex>(graph.getVertices());
+        Collections.shuffle(vertices);
             
-            // dec 6 2011 7:45am CET
-            tripTime = 1323153900;
-            options = new TraverseOptions();
-            //genericDijkstra asks for a traverseoptions, but state contains one now...
-            options.setCalendarService(graphService.getCalendarService());
-            // must set calendar service before setting service days
-            options.setServiceDays(tripTime);
-            options.setMaxWalkDistance(30000);
-            options.setTransferTable(graph.getTransferTable());
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        // dec 6 2011 7:45am CET
+        tripTime = 1323153900;
+        options = new TraverseOptions();
+        //genericDijkstra asks for a traverseoptions, but state contains one now...
+        options.setCalendarService(graphService.getCalendarService());
+        // must set calendar service before setting service days
+        options.setServiceDays(tripTime);
+        options.setMaxWalkDistance(30000);
+        options.setTransferTable(graph.getTransferTable());
     }
     
     @GET @Produces("image/png")
