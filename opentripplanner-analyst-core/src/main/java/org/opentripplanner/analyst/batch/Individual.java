@@ -1,7 +1,7 @@
 package org.opentripplanner.analyst.batch;
 
 import org.opentripplanner.analyst.core.Tile;
-import org.opentripplanner.analyst.core.Tile.Sample;
+import org.opentripplanner.analyst.core.Sample;
 
 /**
  * Individual locations that make up Populations for the purpose
