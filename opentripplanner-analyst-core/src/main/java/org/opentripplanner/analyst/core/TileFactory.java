@@ -36,11 +36,11 @@ public class TileFactory implements SampleSource {
         graph.putService(GeometryIndexService.class, index);
     }
     
-    public Tile makeTile(TileRequest req) {
-        return new Tile(req, this);
+    public Tile makeTemplateTile(TileRequest req) {
+        return new TemplateTile(req, this);
     }
 
-    public DynamicTile makeDynamicTile(TileRequest req) {
+    public Tile makeDynamicTile(TileRequest req) {
         return new DynamicTile(req, this.sampleCache);
     }
 

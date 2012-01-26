@@ -24,7 +24,7 @@ public class TileCacheLoader extends CacheLoader<TileRequest, Tile> {
     @Override
     public Tile load(TileRequest req) throws Exception {
         LOG.debug("tile cache miss. build new tile.");
-        return tileFactory.makeTile(req);
+        return tileFactory.makeTemplateTile(req);
     }
 
 }

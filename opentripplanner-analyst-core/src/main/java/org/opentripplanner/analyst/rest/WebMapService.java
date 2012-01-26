@@ -96,10 +96,6 @@ public class WebMapService {
            @Context UriInfo uriInfo ) { 
         
         ensureCachesInitialized();
-        // MapSearchRequest
-        // MapTileRequest -- includes Graph ref?
-        // MapRenderRequest
-
         LOG.debug("params {}", uriInfo.getQueryParameters());
         
         if (originLat == null || originLon == null) {
@@ -110,6 +106,9 @@ public class WebMapService {
 //        LOG.debug("srs is : {}", srs.getName());
 //        LOG.debug("bbox is : {}", bbox);
 //        LOG.debug("search time is : {}", time);
+
+        // TileRequest -- includes Graph ref?
+        // RenderRequest -- color table etc.
 
         bbox.setCoordinateReferenceSystem(srs);
         TileRequest tileRequest = new TileRequest(bbox, width, height);

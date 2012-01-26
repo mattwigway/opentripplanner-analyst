@@ -1,35 +1,26 @@
 package org.opentripplanner.analyst.core;
 
 import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
 import java.awt.image.IndexColorModel;
 import java.util.Arrays;
-import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
-import org.geotools.referencing.CRS;
-import org.geotools.referencing.crs.DefaultGeographicCRS;
-import org.opengis.geometry.DirectPosition;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
 import org.opentripplanner.analyst.request.TileRequest;
 import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Tile {
+public abstract class Tile {
 
     /* STATIC */
     private static final Logger LOG = LoggerFactory.getLogger(Tile.class);
-    private static final IndexColorModel DEFAULT_COLOR_MAP = getDefaultColorMap();
+    public static final IndexColorModel DEFAULT_COLOR_MAP = buildDefaultColorMap();
     
     /* INSTANCE */
     final GridGeometry2D gg;
     final int width, height;
-    Sample[] samples;
     
-    Tile(TileRequest req, SampleSource sampleSource) {
-
+    Tile(TileRequest req) {
         GridEnvelope2D gridEnv = new GridEnvelope2D(0, 0, req.width, req.height);
         this.gg = new GridGeometry2D(gridEnv, (org.opengis.geometry.Envelope)(req.bbox));
         // TODO: check that gg intersects graph area 
@@ -37,64 +28,9 @@ public class Tile {
         // Envelope2D worldEnv = gg.getEnvelope2D();
         this.width = gridEnv.width;
         this.height = gridEnv.height;
-        this.samples = new Sample[width * height];
-        CoordinateReferenceSystem crs = gg.getCoordinateReferenceSystem2D(); 
-        int i = 0;
-        try {
-            MathTransform tr = CRS.findMathTransform(crs, DefaultGeographicCRS.WGS84);
-            // grid coordinate object to be reused for examining each cell 
-            GridCoordinates2D coord = new GridCoordinates2D();
-            for (int gy = 0; gy < height; gy++) {
-                if (gy % 100 == 0)
-                    LOG.trace("raster line {} / {}", gy, height);
-                for (int gx = 0; gx < width; gx++) {
-                    coord.x = gx;
-                    coord.y = gy;
-                    // find coordinates for current raster cell in tile CRS
-                    DirectPosition sourcePos = gg.gridToWorld(coord);
-                    // convert coordinates in tile CRS to WGS84
-                    //LOG.debug("world : {}", sourcePos);
-                    tr.transform(sourcePos, sourcePos);
-                    //LOG.debug("wgs84 : {}", sourcePos);
-                    // axis order can vary
-                    double lon = sourcePos.getOrdinate(0);
-                    double lat = sourcePos.getOrdinate(1);
-                    // TODO: axes are reversed in the default mathtransform
-                    Sample s = sampleSource.getSample(lon, lat);
-                    samples[i++] = s;
-                }
-            }
-        } catch (Exception e) {
-            LOG.error(e.getMessage());
-            return;
-        }
     }
     
-    public BufferedImage generateImage(ShortestPathTree spt) {
-        long t0 = System.currentTimeMillis();
-        BufferedImage image = new BufferedImage(width, height, 
-                BufferedImage.TYPE_BYTE_INDEXED, DEFAULT_COLOR_MAP);
-        byte[] imagePixelData = ((DataBufferByte)image.getRaster().getDataBuffer()).getData();
-        int i = 0;
-        final byte TRANSPARENT = (byte) 255;
-        for (Sample s : samples) {
-            byte pixel;
-            if (s != null) {
-                pixel = s.evalByte(spt);
-                if (pixel >= 150)
-                    pixel = TRANSPARENT;
-            } else {
-                pixel = TRANSPARENT;
-            }
-            imagePixelData[i] = pixel;
-            i++;
-        }
-        long t1 = System.currentTimeMillis();
-        LOG.debug("filled in tile image from SPT in {}msec", t1 - t0);
-        return image;
-    }    
-
-    protected static IndexColorModel getDefaultColorMap() {
+    private static IndexColorModel buildDefaultColorMap() {
         byte[] r = new byte[256];
         byte[] g = new byte[256];
         byte[] b = new byte[256];
@@ -118,7 +54,7 @@ public class Tile {
     }
 
     @SuppressWarnings("unused")
-    private static IndexColorModel getAlternateColorMap() {
+    private static IndexColorModel buildAlternateColorMap() {
         byte[] r = new byte[256];
         byte[] g = new byte[256];
         byte[] b = new byte[256];
@@ -145,5 +81,7 @@ public class Tile {
         Arrays.fill(a, 149, 255, (byte)0);
         return new IndexColorModel(8, 256, r, g, b, a);
     }
+    
+    public abstract BufferedImage generateImage(ShortestPathTree spt);    
 
 }
