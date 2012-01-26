@@ -38,6 +38,10 @@ public class TileFactory implements SampleSource {
         return new Tile(req, this);
     }
 
+    public DynamicTile makeDynamicTile(TileRequest req) {
+        return new DynamicTile(req, this);
+    }
+
     /* SampleSource interface */
     @Override
     public Sample getSample(int x, int y, double lon, double lat) {
