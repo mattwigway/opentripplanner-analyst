@@ -7,7 +7,8 @@ import org.opentripplanner.routing.spt.ShortestPathTree;
 public class Sample {
     public final int x, y, t0, t1;
     public final Vertex v0, v1;
-    Sample (int x, int y, Vertex v0, int t0, Vertex v1, int t1) {
+    
+    public Sample (int x, int y, Vertex v0, int t0, Vertex v1, int t1) {
         this.x = x;
         this.y = y;
         this.v0 = v0;
@@ -34,5 +35,10 @@ public class Sample {
             m1 = (s1.getElapsedTime() + t1); 
         return (m0 < m1) ? m0 : m1; 
     }
+    
+    public String toString() {
+        return String.format("%d %d %s %d %s %d\n", x, y, v0, t0, v1, t1);
+    }
+    
 }
 
