@@ -116,11 +116,11 @@ public class WebMapService {
         SPTRequest sptRequest = new SPTRequest(originLon, originLat, time.getTimeInMillis()/1000);
 
         ShortestPathTree spt;
-        DynamicTile tile;
+        Tile tile;
         try {
             spt = sptCache.get(sptRequest);
-            //tile = tileCache.get(tileRequest);
-            tile = tileFactory.makeDynamicTile(tileRequest);
+            tile = tileCache.get(tileRequest);
+            //tile = tileFactory.makeDynamicTile(tileRequest);
         } catch (Exception ex) {
             /* this will catch null SPTs for failed searches */
             LOG.error("exception while accessing cache: {}", ex.getMessage());
