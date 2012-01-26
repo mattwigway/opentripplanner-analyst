@@ -129,8 +129,8 @@ public class Tile {
         byte[] imagePixelData = ((DataBufferByte)image.getRaster().getDataBuffer()).getData();
         Arrays.fill(imagePixelData, (byte)255);
         for (Sample s : samples) {
-            byte pixel = s.eval(spt);
-            if (pixel > 150)
+            byte pixel = s.evalByte(spt);
+            if (pixel >= 150)
                 continue;
             int index = s.x + s.y * width;
             imagePixelData[index] = pixel;
@@ -151,21 +151,24 @@ public class Tile {
             this.v1 = v1;
             this.t1 = t1;
         }
-                
-        public byte eval(ShortestPathTree spt) {
+        
+        public byte evalByte(ShortestPathTree spt) {
+            long t = eval(spt) / 60;
+            if (t >= 255)
+                t = 255;
+            return (byte) t;
+        }
+        
+        public long eval(ShortestPathTree spt) {
             State s0 = spt.getState(v0);
             State s1 = spt.getState(v1);
-            long m0 = 255;
-            long m1 = 255;
+            long m0 = Long.MAX_VALUE;
+            long m1 = Long.MAX_VALUE;
             if (s0 != null)
-                m0 = (s0.getElapsedTime() + t0) / 60; 
+                m0 = (s0.getElapsedTime() + t0); 
             if (s1 != null)
-                m1 = (s1.getElapsedTime() + t1) / 60; 
-            if (m1 < m0)
-                m0 = m1;
-            if (m0 >= 255)
-                m0 = 255;
-            return (byte) m0;
+                m1 = (s1.getElapsedTime() + t1); 
+            return (m0 < m1) ? m0 : m1; 
         }
     }
     
