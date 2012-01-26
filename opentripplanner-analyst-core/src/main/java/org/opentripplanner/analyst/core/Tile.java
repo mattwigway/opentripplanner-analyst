@@ -111,7 +111,7 @@ public class Tile {
         return image;
     }    
 
-    private static IndexColorModel getDefaultColorMap() {
+    protected static IndexColorModel getDefaultColorMap() {
         byte[] r = new byte[256];
         byte[] g = new byte[256];
         byte[] b = new byte[256];
