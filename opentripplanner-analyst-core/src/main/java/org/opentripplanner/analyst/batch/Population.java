@@ -1,6 +1,8 @@
 package org.opentripplanner.analyst.batch;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -16,6 +18,8 @@ import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.referencing.crs.CRSAuthorityFactory;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opentripplanner.analyst.core.Tile.Sample;
+import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +35,7 @@ import com.vividsolutions.jts.geom.Polygon;
 public class Population {
     
     private static final Logger LOG = LoggerFactory.getLogger(Population.class);
-    private List<Individual> individuals = new ArrayList<Individual>();
+    public List<Individual> individuals = new ArrayList<Individual>();
 
     public static Population fromCSV(String filename) {
         Population ret = new Population();
@@ -67,6 +71,7 @@ public class Population {
                     .getFeatures(query);
             Iterator<SimpleFeature> it = features.iterator();
             int i = 0;
+            int f = 0;
             while (it.hasNext()) {
                 SimpleFeature feature = it.next();
                 Geometry geom = (Geometry) feature.getDefaultGeometry();
@@ -78,13 +83,16 @@ public class Population {
                 } else {
                     throw new IllegalStateException("Shapefile must contain either points or polygons.");
                 }
-                String id = (String) feature.getAttribute(idAttribute);
+                Object id = feature.getAttribute(idAttribute);
                 double data = (Double) feature.getAttribute(dataAttribute);
                 Individual individual = new Individual(
                         id, point.getX(), point.getY(), data);
                 population.individuals.add(individual);
                 i++;
+                if (individual.sample != null)
+                    f++;
             }
+            LOG.debug("found vertices for {} features out of {}", f, i);
             features.close(it);
         } catch (Exception ex) {
             throw new IllegalStateException("Error loading population from shapefile ", ex);
@@ -93,10 +101,25 @@ public class Population {
         return population;
     }
 
-    public void dump() {
-        for (Individual i : individuals) {
-            System.out.printf("\n");
+    public void writeCsv(String outFileName, ShortestPathTree spt) {
+        LOG.debug("Writing population to CSV: {}", outFileName);
+        File outFile = new File(outFileName);
+        PrintWriter csvWriter;
+        try {
+            csvWriter = new PrintWriter(outFile);
+            csvWriter.printf("data;traveltime\n");
+            for (Individual i : individuals) {
+                Sample s = i.sample;
+                long t = Long.MAX_VALUE;
+                if (s != null)
+                    t = s.eval(spt);
+                csvWriter.printf("%f;%d\n", i.data, t);
+            }
+            csvWriter.close();
+        } catch (Exception e) {
+            LOG.debug("error writing population to CSV: {}", e);
         }
+        LOG.debug("Done writing population to CSV.");
     }
     
 }

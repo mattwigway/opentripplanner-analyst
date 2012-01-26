@@ -16,23 +16,26 @@ import org.geotools.referencing.CRS;
 import org.opengis.geometry.DirectPosition;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RasterPopulation extends Population {
 
+    private static final Logger LOG = LoggerFactory.getLogger(RasterPopulation.class);
     public Individual[][] grid;
+    public int xCells, yCells;
 
-    // public int xCells, yCells;
-
+    // param for crop envelope ?
     public RasterPopulation(String filename) {
         super();
-        System.out.printf("Loading targets from raster file %s\n", filename);
-
+        
+        LOG.debug("Loading population from raster file {}", filename);
         PrintWriter csvWriter = null;
         try {
             File rasterFile = new File(filename);
 
             // csv output for checking load region in GIS
-            File csvFile = new File("/home/syncopate/Desktop/coverage.csv");
+            File csvFile = new File("/home/syncopate/coverage.csv");
             csvWriter = new PrintWriter(csvFile);
 
             // determine file format and CRS, then load raster
@@ -75,9 +78,12 @@ public class RasterPopulation extends Population {
                     csvWriter.printf("%.6f;%.6f;%f\n", targetPos.getOrdinate(0),
                             targetPos.getOrdinate(1), val[0] / 100.0);
                     // add this grid cell to the population
-                    Individual individual = new Individual(targetPos.getOrdinate(0),
-                            targetPos.getOrdinate(1), val[0] / 100.0);
-                    elements.add(individual);
+                    Individual individual = new Individual(
+                            null,
+                            targetPos.getOrdinate(0),
+                            targetPos.getOrdinate(1), 
+                            val[0] / 100.0);
+                    individuals.add(individual);
                 }
             }
         } catch (Exception ex) {
@@ -87,6 +93,6 @@ public class RasterPopulation extends Population {
                 csvWriter.close();
             }
         }
-        System.out.printf("Done loading raster from file\n");
+        LOG.debug("Done loading raster from file.");
     }
 }

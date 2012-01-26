@@ -2,6 +2,7 @@ package org.opentripplanner.analyst.batch.aggregator;
 
 import org.opentripplanner.analyst.batch.Individual;
 import org.opentripplanner.analyst.batch.Population;
+import org.opentripplanner.routing.spt.ShortestPathTree;
 
 /**
  * An aggregator that approximates the integral of a cumulative opportunity
@@ -21,13 +22,13 @@ public class ThresholdCumulativeAggregator implements Aggregator {
 	}
 
 	@Override
-	public double computeAggregate(Population destinations) {
+	public double computeAggregate(Population destinations, ShortestPathTree spt) {
 		double result = 0;
-		for (Individual destination : destinations.elements)
-			if (destination.result < thresholdSeconds)
-				result += destination.data
-						* (thresholdSeconds - destination.result);
-
+		for (Individual destination : destinations.individuals) {
+		    double t = destination.sample.eval(spt); 
+	            if (t < thresholdSeconds)
+	                result += destination.data * (thresholdSeconds - t);
+		}
 		return result;
 	}
 
