@@ -1,20 +1,12 @@
 package org.opentripplanner.analyst.rest;
 
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.GregorianCalendar;
 
-import javax.imageio.ImageIO;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
 
 import org.geotools.geometry.Envelope2D;
 import org.opentripplanner.analyst.core.SlippyTile;
@@ -24,6 +16,7 @@ import org.opentripplanner.analyst.request.SPTCacheLoader;
 import org.opentripplanner.analyst.request.SPTRequest;
 import org.opentripplanner.analyst.request.TileCacheLoader;
 import org.opentripplanner.analyst.request.TileRequest;
+import org.opentripplanner.analyst.rest.utils.TileUtils;
 import org.opentripplanner.routing.services.GraphService;
 import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.slf4j.Logger;
@@ -100,29 +93,7 @@ public class WebMapTileService {
             //return Response.serverError().build();
         }
         
-        BufferedImage image = tile.generateImage(spt);
-        if (image == null) {
-            LOG.warn("response image is null");
-            return Response.noContent().build();
-        }
-            
-        final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        try {
-            long t0 = System.currentTimeMillis();
-            ImageIO.write(image, "png", out);
-            final byte[] imgData = out.toByteArray();
-            final InputStream bigInputStream = new ByteArrayInputStream(imgData);
-            long t1 = System.currentTimeMillis();
-            LOG.debug("wrote image in {}msec", (int)(t1-t0));
-            ResponseBuilder rb = Response.ok(bigInputStream);
-            CacheControl cc = new CacheControl();
-            cc.setMaxAge(3600);
-            cc.setNoCache(false);
-            return rb.cacheControl(cc).build();
-        } catch (final IOException e) {
-            LOG.error("exception while perparing image : {}", e.getMessage());
-            return Response.serverError().build();
-        }
+        return TileUtils.generateImageResponse(tile, spt);
     }
 
 }
