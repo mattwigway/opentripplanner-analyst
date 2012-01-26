@@ -2,6 +2,7 @@ package org.opentripplanner.analyst.core;
 
 import java.util.List;
 
+import org.opentripplanner.analyst.request.SampleCache;
 import org.opentripplanner.analyst.request.TileRequest;
 import org.opentripplanner.routing.core.Graph;
 import org.opentripplanner.routing.edgetype.StreetVertex;
@@ -27,7 +28,8 @@ public class TileFactory implements SampleSource {
 
     private Graph graph;
     private GeometryIndex index;
-
+    private SampleCache sampleCache = new SampleCache(this);
+    
     public void setGraphService(GraphService gs) {
         graph = gs.getGraph();
         index = new GeometryIndex(graph);
@@ -39,7 +41,7 @@ public class TileFactory implements SampleSource {
     }
 
     public DynamicTile makeDynamicTile(TileRequest req) {
-        return new DynamicTile(req, this);
+        return new DynamicTile(req, this.sampleCache);
     }
 
     /* SampleSource interface */

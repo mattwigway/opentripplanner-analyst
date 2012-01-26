@@ -21,6 +21,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.geotools.geometry.Envelope2D;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opentripplanner.analyst.core.DynamicTile;
 import org.opentripplanner.analyst.core.Tile;
 import org.opentripplanner.analyst.core.TileFactory;
 import org.opentripplanner.analyst.request.SPTCacheLoader;
@@ -115,10 +116,11 @@ public class WebMapService {
         SPTRequest sptRequest = new SPTRequest(originLon, originLat, time.getTimeInMillis()/1000);
 
         ShortestPathTree spt;
-        Tile tile;
+        DynamicTile tile;
         try {
             spt = sptCache.get(sptRequest);
-            tile = tileCache.get(tileRequest);
+            //tile = tileCache.get(tileRequest);
+            tile = tileFactory.makeDynamicTile(tileRequest);
         } catch (Exception ex) {
             /* this will catch null SPTs for failed searches */
             LOG.error("exception while accessing cache: {}", ex.getMessage());
