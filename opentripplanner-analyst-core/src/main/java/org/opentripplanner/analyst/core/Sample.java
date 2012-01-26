@@ -5,12 +5,10 @@ import org.opentripplanner.routing.core.Vertex;
 import org.opentripplanner.routing.spt.ShortestPathTree;
 
 public class Sample {
-    public final int x, y, t0, t1;
+    public final int t0, t1;
     public final Vertex v0, v1;
     
-    public Sample (int x, int y, Vertex v0, int t0, Vertex v1, int t1) {
-        this.x = x;
-        this.y = y;
+    public Sample (Vertex v0, int t0, Vertex v1, int t1) {
         this.v0 = v0;
         this.t0 = t0;
         this.v1 = v1;
@@ -37,7 +35,7 @@ public class Sample {
     }
     
     public String toString() {
-        return String.format("%d %d %s %d %s %d\n", x, y, v0, t0, v1, t1);
+        return String.format("Sample: %s in %d min or %s in %d min\n", v0, t0, v1, t1);
     }
     
 }

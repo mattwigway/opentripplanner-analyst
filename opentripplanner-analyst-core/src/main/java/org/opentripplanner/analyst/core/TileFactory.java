@@ -46,7 +46,7 @@ public class TileFactory implements SampleSource {
 
     /* SampleSource interface */
     @Override
-    public Sample getSample(int x, int y, double lon, double lat) {
+    public Sample getSample(double lon, double lat) {
         Coordinate c = new Coordinate(lon, lat);
         Point p = factory.createPoint(c);
         
@@ -92,7 +92,7 @@ public class TileFactory implements SampleSource {
         if (v0 != null) { 
             int t0 = timeToVertex(v0, o0);
             int t1 = timeToVertex(v1, o1);
-            Sample s = new Sample(x, y, v0, t0, v1, t1);
+            Sample s = new Sample(v0, t0, v1, t1);
             return s;
         }
         return null;
