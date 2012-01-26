@@ -44,22 +44,13 @@ public class Tile {
     /* STATIC */
     private static final Logger LOG = LoggerFactory.getLogger(Tile.class);
     private static final IndexColorModel DEFAULT_COLOR_MAP = getDefaultColorMap();
-    private static final GeometryFactory factory = new GeometryFactory();
-    private static final double SEARCH_RADIUS_M = 100; // meters
-    private static final double SEARCH_RADIUS_DEG = 
-            DistanceLibrary.metersToDegrees(SEARCH_RADIUS_M);
     
     /* INSTANCE */
-
-    private Graph graph;
-    private GeometryIndex index;
     final GridGeometry2D gg;
     final int width, height;
     List<Sample> samples = new ArrayList<Sample>();
     
-    Tile(TileRequest req, Graph graph, GeometryIndex index) {
-        this.graph = graph;
-        this.index = index;
+    Tile(TileRequest req, SampleSource sampleSource) {
 
         GridEnvelope2D gridEnv = new GridEnvelope2D(0, 0, req.width, req.height);
         this.gg = new GridGeometry2D(gridEnv, (org.opengis.geometry.Envelope)(req.bbox));
@@ -90,7 +81,7 @@ public class Tile {
                     double lon = sourcePos.getOrdinate(0);
                     double lat = sourcePos.getOrdinate(1);
                     // TODO: axes are reversed in the default mathtransform
-                    Sample s = makeSample(gx, gy, lon, lat);
+                    Sample s = sampleSource.getSample(gx, gy, lon, lat);
                     if (s != null)
                         samples.add(s);
                 }
@@ -100,26 +91,6 @@ public class Tile {
             LOG.error(e.getMessage());
             return;
         }
-    }
-    
-    private static int timeToVertex(StreetVertex v, DistanceOp o) {
-        if (v == null)
-            return -1;
-        GeometryLocation[] gl = o.nearestLocations();
-        Geometry g = v.getGeometry();
-        LocationIndexedLine lil = new LocationIndexedLine(g);
-        LinearLocation ll = lil.indexOf(gl[1].getCoordinate());
-        LineString beginning = (LineString) 
-                lil.extractLine(lil.getStartIndex(), ll);                    
-        // WRONG: using unprojected coordinates
-        double lengthRatio = beginning.getLength() / g.getLength();
-        double distOnStreet = v.getLength() * lengthRatio;
-        double distToStreet = DistanceLibrary.distance(
-                gl[0].getCoordinate(), 
-                gl[1].getCoordinate());
-        double dist = distOnStreet + distToStreet;
-        int t = (int) (dist / 1.33);
-        return t;
     }
     
     public BufferedImage generateImage(ShortestPathTree spt) {
@@ -138,59 +109,7 @@ public class Tile {
         long t1 = System.currentTimeMillis();
         LOG.debug("filled in tile image from SPT in {}msec", t1 - t0);
         return image;
-    }
-    
-    public Sample makeSample(int x, int y, double lon, double lat) {
-        Coordinate c = new Coordinate(lon, lat);
-        Point p = factory.createPoint(c);
-        
-        // track best two turn vertices
-        StreetVertex v0 = null;
-        StreetVertex v1 = null;
-        DistanceOp o0 = null;
-        DistanceOp o1 = null;
-        double d0 = Double.MAX_VALUE;
-        double d1 = Double.MAX_VALUE;
-
-        // query
-        Envelope env = new Envelope(c);
-        env.expandBy(SEARCH_RADIUS_DEG, SEARCH_RADIUS_DEG);
-        @SuppressWarnings("unchecked")
-        List<StreetVertex> vs = (List<StreetVertex>) index.query(env);
-        // query always returns a (possibly empty) list, but never null
-        
-        // find two closest among nearby geometries
-        for (StreetVertex v : vs) {
-            Geometry g = v.getGeometry();
-            DistanceOp o = new DistanceOp(p, g);
-            double d = o.distance();
-            if (d > SEARCH_RADIUS_DEG)
-                continue;
-            if (d < d1) {
-                if (d < d0) {
-                    v1 = v0;
-                    o1 = o0;
-                    d1 = d0;
-                    v0 = v;
-                    o0 = o;
-                    d0 = d;
-                } else {
-                    v1 = v;
-                    o1 = o;
-                    d1 = d;
-                }
-            }
-        }
-        
-        // if at least one vertex was found make a sample
-        if (v0 != null) { 
-            int t0 = timeToVertex(v0, o0);
-            int t1 = timeToVertex(v1, o1);
-            Sample s = new Sample(x, y, v0, t0, v1, t1);
-            return s;
-        }
-        return null;
-    }
+    }    
 
     private static IndexColorModel getDefaultColorMap() {
         byte[] r = new byte[256];
@@ -244,15 +163,4 @@ public class Tile {
         return new IndexColorModel(8, 256, r, g, b, a);
     }
 
-    public GridCoverage2D getGridCoverage2D(ShortestPathTree spt) {
-        BufferedImage image = generateImage(spt);
-        com.vividsolutions.jts.geom.Envelope graphEnvelope = graph.getExtent();
-        org.opengis.geometry.Envelope graphRange = new Envelope2D(
-                DefaultGeographicCRS.WGS84, 
-                graphEnvelope.getMinX(),  graphEnvelope.getMinY(), 
-                graphEnvelope.getWidth(), graphEnvelope.getHeight());
-        GridCoverage2D gridCoverage = new GridCoverageFactory().create(
-                "isochrone", image, graphRange);
-        return gridCoverage;
-    }
 }
