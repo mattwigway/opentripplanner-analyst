@@ -87,7 +87,8 @@ public class DynamicTile {
                     byte pixel = s.evalByte(spt);
                     if (pixel >= 150)
                         continue;
-                    int index = s.x + s.y * width;
+                    // do not use grid locations from sample, they are binned
+                    int index = gx + gy * width;
                     imagePixelData[index] = pixel;
                     ns++;
                 }
