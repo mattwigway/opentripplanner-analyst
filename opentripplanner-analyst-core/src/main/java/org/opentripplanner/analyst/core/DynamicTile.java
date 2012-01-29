@@ -27,7 +27,9 @@ public class DynamicTile extends Tile {
     public BufferedImage generateImage(ShortestPathTree spt) {
         long t0 = System.currentTimeMillis();
         BufferedImage image = new BufferedImage(width, height, 
-                BufferedImage.TYPE_BYTE_INDEXED, DEFAULT_COLOR_MAP);
+                                                //BufferedImage.TYPE_BYTE_INDEXED,
+                                                //DEFAULT_COLOR_MAP);
+                                                BufferedImage.TYPE_BYTE_GRAY);
         byte[] imagePixelData = ((DataBufferByte)image.getRaster().getDataBuffer()).getData();
         Arrays.fill(imagePixelData, (byte)255);
         CoordinateReferenceSystem crs = gg.getCoordinateReferenceSystem2D();

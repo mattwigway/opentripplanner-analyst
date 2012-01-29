@@ -121,7 +121,9 @@ public class VertexRaster {
     public BufferedImage generateImage(ShortestPathTree spt) {
         long t0 = System.currentTimeMillis();
         BufferedImage image = new BufferedImage(widthPixels, heightPixels, 
-                BufferedImage.TYPE_BYTE_INDEXED, DEFAULT_COLOR_MAP);
+                                                //BufferedImage.TYPE_BYTE_INDEXED,
+                                                //DEFAULT_COLOR_MAP);
+                                                BufferedImage.TYPE_BYTE_GRAY);
         byte[] imagePixelData = ((DataBufferByte)image.getRaster().getDataBuffer()).getData();
         Arrays.fill(imagePixelData, (byte)255);
         for (Sample s : samples) {
