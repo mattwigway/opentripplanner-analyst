@@ -9,6 +9,7 @@ import org.opengis.geometry.DirectPosition;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
 import org.opentripplanner.analyst.request.TileRequest;
+import org.opentripplanner.analyst.rest.parameter.LayerStyle;
 import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,10 +54,9 @@ public class TemplateTile extends Tile {
         }
     }
     
-    public BufferedImage generateImage(ShortestPathTree spt) {
+    public BufferedImage generateImage(ShortestPathTree spt, LayerStyle style) {
         long t0 = System.currentTimeMillis();
-        BufferedImage image = new BufferedImage(width, height, 
-                BufferedImage.TYPE_BYTE_INDEXED, DEFAULT_COLOR_MAP);
+        BufferedImage image = getEmptyImage(style);
         byte[] imagePixelData = ((DataBufferByte)image.getRaster().getDataBuffer()).getData();
         int i = 0;
         final byte TRANSPARENT = (byte) 255;
@@ -64,8 +64,6 @@ public class TemplateTile extends Tile {
             byte pixel;
             if (s != null) {
                 pixel = s.evalByte(spt);
-                if (pixel >= 150)
-                    pixel = TRANSPARENT;
             } else {
                 pixel = TRANSPARENT;
             }

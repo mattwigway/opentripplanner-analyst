@@ -12,10 +12,12 @@ import org.geotools.geometry.Envelope2D;
 import org.opentripplanner.analyst.core.SlippyTile;
 import org.opentripplanner.analyst.core.Tile;
 import org.opentripplanner.analyst.core.TileFactory;
+import org.opentripplanner.analyst.request.RenderRequest;
 import org.opentripplanner.analyst.request.SPTCacheLoader;
 import org.opentripplanner.analyst.request.SPTRequest;
 import org.opentripplanner.analyst.request.TileCacheLoader;
 import org.opentripplanner.analyst.request.TileRequest;
+import org.opentripplanner.analyst.rest.parameter.LayerStyle;
 import org.opentripplanner.analyst.rest.parameter.MIMEImageFormat;
 import org.opentripplanner.analyst.rest.utils.TileUtils;
 import org.opentripplanner.routing.services.GraphService;
@@ -94,8 +96,12 @@ public class WebMapTileService {
             //return Response.serverError().build();
         }
 
-        MIMEImageFormat png = new MIMEImageFormat("image/png");
-        return TileUtils.generateImageResponse(tile, spt, png);
+        RenderRequest renderRequest = new RenderRequest(
+                new MIMEImageFormat("image/png"), 
+                LayerStyle.GRAY,
+                true);
+        
+        return TileUtils.generateImageResponse(tile, spt, renderRequest);
     }
 
 }

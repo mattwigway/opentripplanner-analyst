@@ -3,9 +3,9 @@ package org.opentripplanner.analyst.rest.parameter;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class CommaSeparatedList extends ArrayList<String> {
+public class LayerList extends ArrayList<String> {
 
-    public CommaSeparatedList(String v) {
+    public LayerList(String v) {
       super(Arrays.asList(v.split(",")));
     }
 

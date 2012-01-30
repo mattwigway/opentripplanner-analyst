@@ -1,8 +1,6 @@
 package org.opentripplanner.analyst.rest;
 
 import java.util.GregorianCalendar;
-import java.util.List;
-
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -16,12 +14,14 @@ import org.geotools.geometry.Envelope2D;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opentripplanner.analyst.core.Tile;
 import org.opentripplanner.analyst.core.TileFactory;
+import org.opentripplanner.analyst.request.RenderRequest;
 import org.opentripplanner.analyst.request.SPTCacheLoader;
 import org.opentripplanner.analyst.request.SPTRequest;
 import org.opentripplanner.analyst.request.TileCacheLoader;
 import org.opentripplanner.analyst.request.TileRequest;
-import org.opentripplanner.analyst.rest.parameter.CommaSeparatedList;
+import org.opentripplanner.analyst.rest.parameter.LayerList;
 import org.opentripplanner.analyst.rest.parameter.MIMEImageFormat;
+import org.opentripplanner.analyst.rest.parameter.StyleList;
 import org.opentripplanner.analyst.rest.parameter.WMSVersion;
 import org.opentripplanner.analyst.rest.utils.TileUtils;
 import org.opentripplanner.routing.services.GraphService;
@@ -73,8 +73,8 @@ public class WebMapService {
            // Mandatory parameters
            @QueryParam("version") WMSVersion version,
            @QueryParam("request") String request,
-           @QueryParam("layers")  CommaSeparatedList layers, 
-           @QueryParam("styles")  CommaSeparatedList styles, 
+           @QueryParam("layers")  LayerList layers, 
+           @QueryParam("styles")  StyleList styles, 
            @QueryParam("srs")     CoordinateReferenceSystem srs,
            @QueryParam("bbox")    Envelope2D bbox, 
            @QueryParam("width")   int width, 
@@ -111,6 +111,9 @@ public class WebMapService {
         TileRequest tileRequest = new TileRequest(bbox, width, height);
         SPTRequest sptRequest = new SPTRequest(originLon, originLat, time.getTimeInMillis()/1000);
 
+        RenderRequest renderRequest = 
+                new RenderRequest(format, styles.get(0), transparent);
+        
         ShortestPathTree spt;
         Tile tile;
         try {
@@ -124,6 +127,6 @@ public class WebMapService {
             //return Response.serverError().build();
         }
         
-        return TileUtils.generateImageResponse(tile, spt, format);
+        return TileUtils.generateImageResponse(tile, spt, renderRequest);
     }
 }

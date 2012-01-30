@@ -6,6 +6,7 @@ import java.util.Arrays;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
 import org.opentripplanner.analyst.request.TileRequest;
+import org.opentripplanner.analyst.rest.parameter.LayerStyle;
 import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,6 +83,19 @@ public abstract class Tile {
         return new IndexColorModel(8, 256, r, g, b, a);
     }
     
-    public abstract BufferedImage generateImage(ShortestPathTree spt);    
+    protected BufferedImage getEmptyImage(LayerStyle style) {
+        BufferedImage image;
+        switch (style) {
+        case GRAY :
+            image = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
+            break;
+        case COLOR30 :
+        default :
+            image = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_INDEXED, DEFAULT_COLOR_MAP);
+        }
+        return image;
+    }
+    
+    public abstract BufferedImage generateImage(ShortestPathTree spt, LayerStyle style);    
 
 }
