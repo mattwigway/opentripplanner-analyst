@@ -13,6 +13,11 @@ public class StyleList extends ArrayList<LayerStyle> {
     public StyleList(String v) {
         super();
         for (String s : v.split(",")) {
+            if (s.isEmpty())
+                s = "COLOR30";
+            if (s.toUpperCase().equals("GREY"))
+                s = "GRAY";
+                    
             try {
                 this.add(LayerStyle.valueOf(s.toUpperCase()));
             } catch (Exception e) {
