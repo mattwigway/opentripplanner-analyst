@@ -1,6 +1,7 @@
 package org.opentripplanner.analyst.rest;
 
 import java.util.GregorianCalendar;
+import java.util.List;
 
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -19,6 +20,9 @@ import org.opentripplanner.analyst.request.SPTCacheLoader;
 import org.opentripplanner.analyst.request.SPTRequest;
 import org.opentripplanner.analyst.request.TileCacheLoader;
 import org.opentripplanner.analyst.request.TileRequest;
+import org.opentripplanner.analyst.rest.parameter.CommaSeparatedList;
+import org.opentripplanner.analyst.rest.parameter.MIMEImageFormat;
+import org.opentripplanner.analyst.rest.parameter.WMSVersion;
 import org.opentripplanner.analyst.rest.utils.TileUtils;
 import org.opentripplanner.routing.services.GraphService;
 import org.opentripplanner.routing.spt.ShortestPathTree;
@@ -33,7 +37,7 @@ import com.sun.jersey.api.spring.Autowire;
 import com.sun.jersey.spi.resource.Singleton;
 
 @Path("wms")
-@Singleton
+@Singleton // maybe inject TileProvider (caches) at each request
 @Autowire
 public class WebMapService {
     
@@ -67,15 +71,15 @@ public class WebMapService {
     @GET @Produces("image/*")
     public Response wmsGet(
            // Mandatory parameters
-           @QueryParam("version") String  version,
-           @QueryParam("request") String  request,
-           @QueryParam("layers")  String  layers, 
-           @QueryParam("styles")  String  styles, 
+           @QueryParam("version") WMSVersion version,
+           @QueryParam("request") String request,
+           @QueryParam("layers")  CommaSeparatedList layers, 
+           @QueryParam("styles")  CommaSeparatedList styles, 
            @QueryParam("srs")     CoordinateReferenceSystem srs,
            @QueryParam("bbox")    Envelope2D bbox, 
            @QueryParam("width")   int width, 
            @QueryParam("height")  int height, 
-           @QueryParam("format")  String format,
+           @QueryParam("format")  MIMEImageFormat format,
            // Optional parameters
            @QueryParam("transparent") @DefaultValue("false") Boolean transparent,
            @QueryParam("bgcolor") @DefaultValue("0xFFFFFF") String bgcolor,
@@ -89,7 +93,8 @@ public class WebMapService {
         
         ensureCachesInitialized();
         LOG.debug("params {}", uriInfo.getQueryParameters());
-        
+        LOG.debug("layers = {}, styles = {}", layers, styles);
+        LOG.debug("version = {}", version);
         if (originLat == null || originLon == null) {
             LOG.warn("no origin (sample dimension) specified.");
             return Response.noContent().build();
@@ -119,6 +124,6 @@ public class WebMapService {
             //return Response.serverError().build();
         }
         
-        return TileUtils.generateImageResponse(tile, spt);
+        return TileUtils.generateImageResponse(tile, spt, format);
     }
 }

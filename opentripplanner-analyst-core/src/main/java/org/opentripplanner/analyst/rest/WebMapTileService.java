@@ -16,6 +16,7 @@ import org.opentripplanner.analyst.request.SPTCacheLoader;
 import org.opentripplanner.analyst.request.SPTRequest;
 import org.opentripplanner.analyst.request.TileCacheLoader;
 import org.opentripplanner.analyst.request.TileRequest;
+import org.opentripplanner.analyst.rest.parameter.MIMEImageFormat;
 import org.opentripplanner.analyst.rest.utils.TileUtils;
 import org.opentripplanner.routing.services.GraphService;
 import org.opentripplanner.routing.spt.ShortestPathTree;
@@ -92,8 +93,9 @@ public class WebMapTileService {
             throw new RuntimeException(ex);
             //return Response.serverError().build();
         }
-        
-        return TileUtils.generateImageResponse(tile, spt);
+
+        MIMEImageFormat png = new MIMEImageFormat("image/png");
+        return TileUtils.generateImageResponse(tile, spt, png);
     }
 
 }
