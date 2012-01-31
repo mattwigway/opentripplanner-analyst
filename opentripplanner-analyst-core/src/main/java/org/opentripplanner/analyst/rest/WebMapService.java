@@ -94,6 +94,7 @@ public class WebMapService {
            @QueryParam("DIM_ORIGINLAT") Float originLat,
            @QueryParam("DIM_ORIGINLONB") Float originLonB, 
            @QueryParam("DIM_ORIGINLATB") Float originLatB,
+           @QueryParam("DIM_ELAPSED") Long elapsed,
            @Context UriInfo uriInfo ) { 
         
         ensureCachesInitialized();
@@ -116,7 +117,7 @@ public class WebMapService {
         
         Layer layer = layers.get(0);
         Style style = styles.get(0);
-        if (layer == Layer.DIFFERENCE)
+        if (layer != Layer.TRAVELTIME)
             sptRequest2 = new SPTRequest(originLonB, originLatB, time.getTimeInMillis()/1000);
         
         RenderRequest renderRequest = new RenderRequest(format, style, transparent);
@@ -137,11 +138,21 @@ public class WebMapService {
         }
         
         BufferedImage image;
-        if (layer == Layer.DIFFERENCE && spt2 != null) {
-            image = tile.generateImageSubtract(spt, spt2, renderRequest);
-        } else {
+        switch (layer) {
+        case DIFFERENCE :
+            if (spt2 != null) {
+                image = tile.generateImageSubtract(spt, spt2, renderRequest);
+                break;
+            }
+        case HAGERSTRAND :
+            if (spt2 != null) {
+                image = tile.generateImageHagerstrand(spt, spt2, elapsed, renderRequest);
+                break;
+            } 
+        default :
             image = tile.generateImage(spt, renderRequest);
         }
+        
         return TileUtils.generateImageResponse(image, format);
     }
 }

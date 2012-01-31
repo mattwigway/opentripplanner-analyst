@@ -19,6 +19,7 @@ public abstract class Tile {
     private static final Logger LOG = LoggerFactory.getLogger(Tile.class);
     public static final IndexColorModel DEFAULT_COLOR_MAP = buildDefaultColorMap();
     public static final IndexColorModel DIFFERENCE_COLOR_MAP = buildDifferenceColorMap();
+    public static final IndexColorModel TRANSPARENT_COLOR_MAP = buildTransparentColorMap();
     
     /* INSTANCE */
     final GridGeometry2D gg;
@@ -76,6 +77,19 @@ public abstract class Tile {
         return new IndexColorModel(8, 256, r, g, b, a);
     }
 
+    private static IndexColorModel buildTransparentColorMap() {
+        byte[] r = new byte[256];
+        byte[] g = new byte[256];
+        byte[] b = new byte[256];
+        byte[] a = new byte[256];
+        for (int i=0; i<256; i++) {
+            //r[i] = g[i] = b[i] = (byte) 255;
+            a[i] = (byte) (255 - i);
+        }
+        //a[255] = (byte) 255;
+        return new IndexColorModel(8, 256, r, g, b, a);
+    }
+
     protected BufferedImage getEmptyImage(Style style) {
         BufferedImage image;
         switch (style) {
@@ -84,6 +98,9 @@ public abstract class Tile {
             break;
         case DIFFERENCE :
             image = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_INDEXED, DIFFERENCE_COLOR_MAP);
+            break;
+        case TRANSPARENT :
+            image = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_INDEXED, TRANSPARENT_COLOR_MAP);
             break;
         case COLOR30 :
         default :
@@ -126,7 +143,6 @@ public abstract class Tile {
             byte pixel;
             if (s != null) {
                 double t = (k1 * s.eval(spt1) + k2 * s.eval(spt2)) / 60 + intercept; 
-                t += 128;
                 if (t < 0 || t > 255)
                     t = TRANSPARENT;
                 pixel = (byte) t;
@@ -146,7 +162,7 @@ public abstract class Tile {
             ShortestPathTree spt1, 
             ShortestPathTree spt2, 
             RenderRequest renderRequest) {
-        return this.linearCombination(1, spt1, -1, spt2, 0, renderRequest);
+        return this.linearCombination(1, spt1, -1, spt2, 128, renderRequest);
     }
     
     public BufferedImage generateImageHagerstrand (

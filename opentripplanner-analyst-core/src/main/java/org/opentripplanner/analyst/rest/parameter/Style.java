@@ -2,5 +2,6 @@ package org.opentripplanner.analyst.rest.parameter;
 public enum Style {
     GRAY,
     COLOR30,
-    DIFFERENCE
+    DIFFERENCE, 
+    TRANSPARENT
 }

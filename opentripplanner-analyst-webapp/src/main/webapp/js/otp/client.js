@@ -38,6 +38,7 @@ var analyst = new L.TileLayer.WMS("http://localhost:8080/opentripplanner-analyst
     styles: 'color30',
     format: 'image/png',
     transparent: true,
+    DIM_ELAPSED: 120,
     time: "2011-12-06T08:00:00Z",
     attribution: osmAttrib
 });
