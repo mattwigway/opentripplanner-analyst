@@ -13,6 +13,7 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 
 import org.opentripplanner.analyst.core.Tile;
 import org.opentripplanner.analyst.request.RenderRequest;
+import org.opentripplanner.analyst.rest.parameter.MIMEImageFormat;
 import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,9 +21,8 @@ import org.slf4j.LoggerFactory;
 public class TileUtils {
     private static final Logger LOG = LoggerFactory.getLogger(TileUtils.class);
     
-    public static Response generateImageResponse(Tile tile, 
-            ShortestPathTree spt, RenderRequest rr) {
-        BufferedImage image = tile.generateImage(spt, rr.style);
+    public static Response generateImageResponse(
+            BufferedImage image, MIMEImageFormat format) {
         if (image == null) {
             LOG.warn("response image is null");
             return Response.noContent().build();
@@ -31,7 +31,7 @@ public class TileUtils {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
             long t0 = System.currentTimeMillis();
-            ImageIO.write(image, rr.format.type, out);
+            ImageIO.write(image, format.type, out);
             final byte[] imgData = out.toByteArray();
             final InputStream bigInputStream = new ByteArrayInputStream(imgData);
             long t1 = System.currentTimeMillis();

@@ -1,5 +1,6 @@
 package org.opentripplanner.analyst.rest;
 
+import java.awt.image.BufferedImage;
 import java.util.GregorianCalendar;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -19,8 +20,10 @@ import org.opentripplanner.analyst.request.SPTCacheLoader;
 import org.opentripplanner.analyst.request.SPTRequest;
 import org.opentripplanner.analyst.request.TileCacheLoader;
 import org.opentripplanner.analyst.request.TileRequest;
+import org.opentripplanner.analyst.rest.parameter.Layer;
 import org.opentripplanner.analyst.rest.parameter.LayerList;
 import org.opentripplanner.analyst.rest.parameter.MIMEImageFormat;
+import org.opentripplanner.analyst.rest.parameter.Style;
 import org.opentripplanner.analyst.rest.parameter.StyleList;
 import org.opentripplanner.analyst.rest.parameter.WMSVersion;
 import org.opentripplanner.analyst.rest.utils.TileUtils;
@@ -59,7 +62,7 @@ public class WebMapService {
         if (sptCache == null) {
             sptCache = CacheBuilder.newBuilder()
                     .concurrencyLevel(16)
-                    .maximumSize(4)
+                    .maximumSize(8)
                     .build(cacheLoader);
             tileCache = CacheBuilder.newBuilder()
                     .concurrencyLevel(16)
@@ -89,44 +92,56 @@ public class WebMapService {
            // Sample dimensions
            @QueryParam("DIM_ORIGINLON") Float originLon, 
            @QueryParam("DIM_ORIGINLAT") Float originLat,
+           @QueryParam("DIM_ORIGINLONB") Float originLonB, 
+           @QueryParam("DIM_ORIGINLATB") Float originLatB,
            @Context UriInfo uriInfo ) { 
         
         ensureCachesInitialized();
         LOG.debug("params {}", uriInfo.getQueryParameters());
-        LOG.debug("layers = {}, styles = {}", layers, styles);
+        LOG.debug("layers = {}", layers);
+        LOG.debug("styles = {}", styles);
         LOG.debug("version = {}", version);
+        LOG.debug("srs is : {}", srs.getName());
+        LOG.debug("bbox is : {}", bbox);
+        LOG.debug("search time is : {}", time);
         if (originLat == null || originLon == null) {
             LOG.warn("no origin (sample dimension) specified.");
             return Response.noContent().build();
         }
-        
-//        LOG.debug("srs is : {}", srs.getName());
-//        LOG.debug("bbox is : {}", bbox);
-//        LOG.debug("search time is : {}", time);
-
-        // TileRequest -- includes Graph ref?
-        // RenderRequest -- color table etc.
 
         bbox.setCoordinateReferenceSystem(srs);
         TileRequest tileRequest = new TileRequest(bbox, width, height);
         SPTRequest sptRequest = new SPTRequest(originLon, originLat, time.getTimeInMillis()/1000);
-
-        RenderRequest renderRequest = 
-                new RenderRequest(format, styles.get(0), transparent);
+        SPTRequest sptRequest2 = null;
         
-        ShortestPathTree spt;
+        Layer layer = layers.get(0);
+        Style style = styles.get(0);
+        if (layer == Layer.DIFFERENCE)
+            sptRequest2 = new SPTRequest(originLonB, originLatB, time.getTimeInMillis()/1000);
+        
+        RenderRequest renderRequest = new RenderRequest(format, style, transparent);
+        
+        ShortestPathTree spt, spt2 = null;
         Tile tile;
         try {
             spt = sptCache.get(sptRequest);
+            if (sptRequest2 != null)
+                spt2 = sptCache.get(sptRequest2);
             tile = tileCache.get(tileRequest);
-            //tile = tileFactory.makeDynamicTile(tileRequest);
+            // tile = tileFactory.makeDynamicTile(tileRequest);
         } catch (Exception ex) {
             /* this will catch null SPTs for failed searches */
             LOG.error("exception while accessing cache: {}", ex.getMessage());
             throw new RuntimeException(ex);
-            //return Response.serverError().build();
+            // return Response.serverError().build();
         }
         
-        return TileUtils.generateImageResponse(tile, spt, renderRequest);
+        BufferedImage image;
+        if (layer == Layer.DIFFERENCE && spt2 != null) {
+            image = tile.generateImageSubtract(spt, spt2, renderRequest);
+        } else {
+            image = tile.generateImage(spt, renderRequest);
+        }
+        return TileUtils.generateImageResponse(image, format);
     }
 }

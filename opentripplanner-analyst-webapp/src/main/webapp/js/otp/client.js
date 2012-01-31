@@ -34,7 +34,8 @@ var aerAttrib = 'Map data &copy; 2011 OpenStreetMap contributors';
 var aerLayer = new L.TileLayer(arrayAerial[0], {maxZoom: 18, attribution: aerAttrib});
 
 var analyst = new L.TileLayer.WMS("http://localhost:8080/opentripplanner-analyst-core/wms", {
-    layers: 'test',
+    layers: 'traveltime',
+    styles: 'color30',
     format: 'image/png',
     transparent: true,
     time: "2011-12-06T08:00:00Z",
@@ -48,6 +49,8 @@ var analyst = new L.TileLayer.WMS("http://localhost:8080/opentripplanner-analyst
 
 var refresh = function (ll) {
 	map.removeLayer(analyst);
+    analyst.wmsParams.DIM_ORIGINLATB = analyst.wmsParams.DIM_ORIGINLAT;
+    analyst.wmsParams.DIM_ORIGINLONB = analyst.wmsParams.DIM_ORIGINLON;
     analyst.wmsParams.DIM_ORIGINLAT = ll.lat;
     analyst.wmsParams.DIM_ORIGINLON = ll.lng;
     map.addLayer(analyst);

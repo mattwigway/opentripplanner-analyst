@@ -1,12 +1,14 @@
 package org.opentripplanner.analyst.core;
 
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
 import java.awt.image.IndexColorModel;
 import java.util.Arrays;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
+import org.opentripplanner.analyst.request.RenderRequest;
 import org.opentripplanner.analyst.request.TileRequest;
-import org.opentripplanner.analyst.rest.parameter.LayerStyle;
+import org.opentripplanner.analyst.rest.parameter.Style;
 import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +18,7 @@ public abstract class Tile {
     /* STATIC */
     private static final Logger LOG = LoggerFactory.getLogger(Tile.class);
     public static final IndexColorModel DEFAULT_COLOR_MAP = buildDefaultColorMap();
+    public static final IndexColorModel DIFFERENCE_COLOR_MAP = buildDifferenceColorMap();
     
     /* INSTANCE */
     final GridGeometry2D gg;
@@ -53,41 +56,34 @@ public abstract class Tile {
         }
         return new IndexColorModel(8, 256, r, g, b, a);
     }
-
-    @SuppressWarnings("unused")
-    private static IndexColorModel buildAlternateColorMap() {
+    
+    private static IndexColorModel buildDifferenceColorMap() {
         byte[] r = new byte[256];
         byte[] g = new byte[256];
         byte[] b = new byte[256];
         byte[] a = new byte[256];
-        Arrays.fill(a, (byte)255);
-        for (int i=0; i<30; i++) {
-            byte u = (byte) (i * 8);
-            byte d = (byte) (255 - u);
-            g[i + 00]  = d; // <  30 green 
-            b[i + 00]  = u; 
-            b[i + 30]  = d; // >= 30 blue
-            g[i + 30]  = u; 
-            r[i + 30]  = u; 
-            g[i + 60]  = d; // >= 60 yellow 
-            r[i + 60]  = d;
-            r[i + 60] += u;
-            r[i + 90]  = d; // >= 90 red
-            b[i + 90]  = u;
-            r[i + 90] += u;
-            b[i + 120] = d; // >=120 pink fading to transparent 
-            r[i + 120] = d;
-            a[i + 120] = d;
+        Arrays.fill(a, (byte) 200);
+        for (int i=0; i<128; i++) {
+            b[127 - i] = (byte) (i * 2);
+            r[128 + i] = (byte) (i * 2);
         }
-        Arrays.fill(a, 149, 255, (byte)0);
+        for (int i=0; i<10; i++) {
+            byte v = (byte) (255 - i * 25);
+            g[127 - i] = v;
+            g[128 + i] = v;
+        }
+        a[255] = 0;
         return new IndexColorModel(8, 256, r, g, b, a);
     }
-    
-    protected BufferedImage getEmptyImage(LayerStyle style) {
+
+    protected BufferedImage getEmptyImage(Style style) {
         BufferedImage image;
         switch (style) {
         case GRAY :
             image = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
+            break;
+        case DIFFERENCE :
+            image = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_INDEXED, DIFFERENCE_COLOR_MAP);
             break;
         case COLOR30 :
         default :
@@ -96,6 +92,71 @@ public abstract class Tile {
         return image;
     }
     
-    public abstract BufferedImage generateImage(ShortestPathTree spt, LayerStyle style);    
+    public BufferedImage generateImage(ShortestPathTree spt, RenderRequest renderRequest) {
+        long t0 = System.currentTimeMillis();
+        BufferedImage image = getEmptyImage(renderRequest.style);
+        byte[] imagePixelData = ((DataBufferByte)image.getRaster().getDataBuffer()).getData();
+        int i = 0;
+        final byte TRANSPARENT = (byte) 255;
+        for (Sample s : getSamples()) {
+            byte pixel;
+            if (s != null) {
+                pixel = s.evalByte(spt);
+            } else {
+                pixel = TRANSPARENT;
+            }
+            imagePixelData[i] = pixel;
+            i++;
+        }
+        long t1 = System.currentTimeMillis();
+        LOG.debug("filled in tile image from SPT in {}msec", t1 - t0);
+        return image;
+    }
+
+    public BufferedImage linearCombination(
+            double k1, ShortestPathTree spt1, 
+            double k2, ShortestPathTree spt2, 
+            double intercept, RenderRequest renderRequest) {
+        long t0 = System.currentTimeMillis();
+        BufferedImage image = getEmptyImage(renderRequest.style);
+        byte[] imagePixelData = ((DataBufferByte)image.getRaster().getDataBuffer()).getData();
+        int i = 0;
+        final byte TRANSPARENT = (byte) 255;
+        for (Sample s : getSamples()) {
+            byte pixel;
+            if (s != null) {
+                double t = (k1 * s.eval(spt1) + k2 * s.eval(spt2)) / 60 + intercept; 
+                t += 128;
+                if (t < 0 || t > 255)
+                    t = TRANSPARENT;
+                pixel = (byte) t;
+            } else {
+                pixel = TRANSPARENT;
+            }
+            imagePixelData[i] = pixel;
+            i++;
+        }
+        long t1 = System.currentTimeMillis();
+        LOG.debug("filled in tile image from SPT in {}msec", t1 - t0);
+        return image;
+    }
+
+
+    public BufferedImage generateImageSubtract (
+            ShortestPathTree spt1, 
+            ShortestPathTree spt2, 
+            RenderRequest renderRequest) {
+        return this.linearCombination(1, spt1, -1, spt2, 0, renderRequest);
+    }
+    
+    public BufferedImage generateImageHagerstrand (
+            ShortestPathTree spt1, 
+            ShortestPathTree spt2, 
+            long totalTime,
+            RenderRequest renderRequest) {
+        return this.linearCombination(-1, spt1, -1, spt2, totalTime, renderRequest);
+    }
+
+    public abstract Sample[] getSamples();
 
 }

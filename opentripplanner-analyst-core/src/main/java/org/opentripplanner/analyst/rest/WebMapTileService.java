@@ -1,5 +1,6 @@
 package org.opentripplanner.analyst.rest;
 
+import java.awt.image.BufferedImage;
 import java.util.GregorianCalendar;
 
 import javax.ws.rs.GET;
@@ -17,7 +18,7 @@ import org.opentripplanner.analyst.request.SPTCacheLoader;
 import org.opentripplanner.analyst.request.SPTRequest;
 import org.opentripplanner.analyst.request.TileCacheLoader;
 import org.opentripplanner.analyst.request.TileRequest;
-import org.opentripplanner.analyst.rest.parameter.LayerStyle;
+import org.opentripplanner.analyst.rest.parameter.Style;
 import org.opentripplanner.analyst.rest.parameter.MIMEImageFormat;
 import org.opentripplanner.analyst.rest.utils.TileUtils;
 import org.opentripplanner.routing.services.GraphService;
@@ -98,10 +99,11 @@ public class WebMapTileService {
 
         RenderRequest renderRequest = new RenderRequest(
                 new MIMEImageFormat("image/png"), 
-                LayerStyle.GRAY,
+                Style.GRAY,
                 true);
-        
-        return TileUtils.generateImageResponse(tile, spt, renderRequest);
+
+        BufferedImage image = tile.generateImage(spt, renderRequest);
+        return TileUtils.generateImageResponse(image, renderRequest.format);
     }
 
 }

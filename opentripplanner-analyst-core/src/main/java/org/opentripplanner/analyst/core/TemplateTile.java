@@ -8,8 +8,8 @@ import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.opengis.geometry.DirectPosition;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
+import org.opentripplanner.analyst.request.RenderRequest;
 import org.opentripplanner.analyst.request.TileRequest;
-import org.opentripplanner.analyst.rest.parameter.LayerStyle;
 import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,25 +54,8 @@ public class TemplateTile extends Tile {
         }
     }
     
-    public BufferedImage generateImage(ShortestPathTree spt, LayerStyle style) {
-        long t0 = System.currentTimeMillis();
-        BufferedImage image = getEmptyImage(style);
-        byte[] imagePixelData = ((DataBufferByte)image.getRaster().getDataBuffer()).getData();
-        int i = 0;
-        final byte TRANSPARENT = (byte) 255;
-        for (Sample s : samples) {
-            byte pixel;
-            if (s != null) {
-                pixel = s.evalByte(spt);
-            } else {
-                pixel = TRANSPARENT;
-            }
-            imagePixelData[i] = pixel;
-            i++;
-        }
-        long t1 = System.currentTimeMillis();
-        LOG.debug("filled in tile image from SPT in {}msec", t1 - t0);
-        return image;
-    }    
+    public Sample[] getSamples() {
+        return this.samples;
+    }
 
 }

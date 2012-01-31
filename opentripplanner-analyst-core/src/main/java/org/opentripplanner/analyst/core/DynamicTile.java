@@ -1,8 +1,5 @@
 package org.opentripplanner.analyst.core;
 
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
-import java.util.Arrays;
 import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
@@ -10,8 +7,6 @@ import org.opengis.geometry.DirectPosition;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
 import org.opentripplanner.analyst.request.TileRequest;
-import org.opentripplanner.analyst.rest.parameter.LayerStyle;
-import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,17 +20,15 @@ public class DynamicTile extends Tile {
         this.ss = sampleSource;
     }
     
-    public BufferedImage generateImage(ShortestPathTree spt, LayerStyle style) {
+    public Sample[] getSamples() {
+        Sample[] ret = new Sample[width * height];
         long t0 = System.currentTimeMillis();
-        BufferedImage image = getEmptyImage(style);
-        byte[] imagePixelData = ((DataBufferByte)image.getRaster().getDataBuffer()).getData();
-        Arrays.fill(imagePixelData, (byte)255);
         CoordinateReferenceSystem crs = gg.getCoordinateReferenceSystem2D();
         try {
             MathTransform tr = CRS.findMathTransform(crs, DefaultGeographicCRS.WGS84);
             // grid coordinate object to be reused for examining each cell 
             GridCoordinates2D coord = new GridCoordinates2D();
-            int ns = 0;
+            int i = 0, ns = 0;
             for (int gy = 0; gy < height; gy++) {
                 for (int gx = 0; gx < width; gx++) {
                     coord.x = gx;
@@ -48,15 +41,10 @@ public class DynamicTile extends Tile {
                     double lon = sourcePos.getOrdinate(0);
                     double lat = sourcePos.getOrdinate(1);
                     Sample s = ss.getSample(lon, lat);
-                    if (s == null)
-                        continue;
-                    byte pixel = s.evalByte(spt);
-                    if (pixel >= 150)
-                        continue;
-                    // do not use grid locations from sample, they are binned
-                    int index = gx + gy * width;
-                    imagePixelData[index] = pixel;
-                    ns++;
+                    if (s != null)
+                        ns++;
+                    ret[i] = s;
+                    i++;
                 }
             }
             LOG.debug("finished preparing tile. number of samples: {}", ns); 
@@ -66,7 +54,7 @@ public class DynamicTile extends Tile {
         }
         long t1 = System.currentTimeMillis();
         LOG.debug("filled in tile image from SPT in {}msec", t1 - t0);
-        return image;
+        return ret;
     }
-    
+
 }
