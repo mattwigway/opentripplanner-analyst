@@ -14,18 +14,18 @@ import org.springframework.stereotype.Component;
 public class Renderer {
 
     @Autowired
-    private TileCache tileFactory;
+    private TileCache tileCache;
 
     @Autowired
-    private SPTCache sptFactory;
+    private SPTCache sptCache;
 
     public Response getResponse (TileRequest tileRequest, 
             SPTRequest sptRequestA, SPTRequest sptRequestB, 
             RenderRequest renderRequest) throws Exception {
 
-        Tile tile = tileFactory.get(tileRequest);
-        ShortestPathTree sptA = sptFactory.get(sptRequestA);
-        ShortestPathTree sptB = sptFactory.get(sptRequestB);
+        Tile tile = tileCache.get(tileRequest);
+        ShortestPathTree sptA = sptCache.get(sptRequestA);
+        ShortestPathTree sptB = sptCache.get(sptRequestB);
         
         BufferedImage image;
         switch (renderRequest.layer) {
@@ -36,11 +36,12 @@ public class Renderer {
             long elapsed = sptRequestB.time - sptRequestA.time;
             image = tile.generateImageHagerstrand(sptA, sptB, elapsed, renderRequest);
             break;
+        case TRAVELTIME :
         default :
             image = tile.generateImage(sptA, renderRequest);
         }
         
-        return TileUtils.generateImageResponse(image, renderRequest.format);
+        return TileUtils.generateStreamingImageResponse(image, renderRequest.format);
     }
     
 }

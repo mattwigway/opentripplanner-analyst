@@ -8,6 +8,12 @@ import org.opentripplanner.analyst.core.SampleSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+/**
+ * This cache sits in front of the SampleFactory. It will bin samples by rounded lat/lon 
+ * via the SampleRequest class. Because all pixel locations at one zoom level are also
+ * present in tiles at the next zoom level, this cache allows tiles to share Sample objects 
+ * and spend less time recalculating them when a new zoom level is encountered.
+ */
 @Component
 public class SampleCache implements SampleSource {
 

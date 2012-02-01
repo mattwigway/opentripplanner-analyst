@@ -1,10 +1,16 @@
 package org.opentripplanner.analyst.request;
 
+import java.util.GregorianCalendar;
+
 public class SPTRequest {
 
     public final double lon; 
     public final double lat;
     public final long time;
+
+    public SPTRequest(double lon, double lat, GregorianCalendar time) {
+        this(lon, lat, time.getTimeInMillis() / 1000);
+    }
 
     public SPTRequest(double lon, double lat, long time) {
         this.lon = lon;

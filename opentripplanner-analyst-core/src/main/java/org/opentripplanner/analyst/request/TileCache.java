@@ -32,20 +32,13 @@ public class TileCache extends CacheLoader<TileRequest, Tile> {
     @Override
     /** completes the abstract CacheLoader superclass */
     public Tile load(TileRequest req) throws Exception {
-        return makeTemplateTile(req);
+        return new TemplateTile(req, sampleFactory);
+        //return new DynamicTile(req, sampleCache);
     }
 
     /** delegate to the tile LoadingCache */
     public Tile get(TileRequest req) throws Exception {
         return tileCache.get(req);
     }
-    
-    private Tile makeTemplateTile(TileRequest req) {
-        return new TemplateTile(req, sampleFactory);
-    }
-
-    private Tile makeDynamicTile(TileRequest req) {
-        return new DynamicTile(req, sampleCache);
-    }
-    
+        
 }
