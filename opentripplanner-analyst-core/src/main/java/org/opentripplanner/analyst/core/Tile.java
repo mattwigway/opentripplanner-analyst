@@ -85,11 +85,14 @@ public abstract class Tile {
         byte[] g = new byte[256];
         byte[] b = new byte[256];
         byte[] a = new byte[256];
-        for (int i=0; i<256; i++) {
-            //r[i] = g[i] = b[i] = (byte) 255;
-            a[i] = (byte) (255 - i);
+        for (int i=0; i<60; i++) {
+            int alpha = 240 - i * 4;
+            a[i] = (byte) alpha;
         }
-        //a[255] = (byte) 255;
+        for (int i=60; i<255; i++) {
+            a[i] = 0;
+        }
+        a[255] = (byte) 240;
         return new IndexColorModel(8, 256, r, g, b, a);
     }
 
@@ -171,9 +174,9 @@ public abstract class Tile {
     public BufferedImage generateImageHagerstrand (
             ShortestPathTree spt1, 
             ShortestPathTree spt2, 
-            long totalTime,
+            long totalTimeSeconds,
             RenderRequest renderRequest) {
-        return this.linearCombination(-1, spt1, -1, spt2, totalTime, renderRequest);
+        return this.linearCombination(-1, spt1, -1, spt2, totalTimeSeconds/60, renderRequest);
     }
 
     public GridCoverage2D getGridCoverage2D(BufferedImage image) {
