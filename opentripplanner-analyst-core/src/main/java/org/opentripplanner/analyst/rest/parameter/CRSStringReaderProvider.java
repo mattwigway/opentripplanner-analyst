@@ -9,7 +9,6 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.Provider;
 
 import org.geotools.referencing.CRS;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import com.sun.jersey.spi.StringReader;
@@ -30,8 +29,6 @@ public class CRSStringReaderProvider implements StringReaderProvider {
 
     private static class CRSStringReader implements StringReader<CoordinateReferenceSystem> {
 
-        //private static CRSAuthorityFactory factory = CRS.getAuthorityFactory(false); // TRUE?
-        
         @Override
         public CoordinateReferenceSystem fromString(String crsName) {
             try {

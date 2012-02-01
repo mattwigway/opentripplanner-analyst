@@ -5,32 +5,30 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.opentripplanner.analyst.core.Sample;
 import org.opentripplanner.analyst.core.SampleSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+@Component
 public class SampleCache implements SampleSource {
 
-    private Sample emptySample = new Sample(null, 0, null, 0);
-    private SampleSource source;
-    private Map<SampleRequest, Sample> cache;
+    private final Sample emptySample = new Sample(null, 0, null, 0);
+    private final Map<SampleRequest, Sample> cache =
+            new ConcurrentHashMap<SampleRequest, Sample>();
     
-    public SampleCache (SampleSource source) {
-        this.source = source;
-        this.cache = new ConcurrentHashMap<SampleRequest, Sample>();
-    }
+    @Autowired
+    private SampleFactory sampleFactory;
     
-    // must distinguish between null sample and key not found
+    // should distinguish between null sample and key not found
     
     @Override
     public Sample getSample(double lon, double lat) {
         SampleRequest sr = new SampleRequest(lon, lat);
         Sample ret = cache.get(sr);
         if (ret == null) {
-            //System.out.printf("cache miss %d %d\n", sr.lon, sr.lat);
-            ret = source.getSample(lon, lat);
+            ret = sampleFactory.getSample(lon, lat);
             if (ret == null)
                 ret = emptySample;
             cache.put(sr, ret);
-        } else {
-            //System.out.printf("cache hit  %d %d\n", sr.lon, sr.lat);
         }
         return ret;
     }

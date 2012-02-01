@@ -14,10 +14,10 @@ import org.springframework.stereotype.Component;
 public class Renderer {
 
     @Autowired
-    private TileFactory tileFactory;
+    private TileCache tileFactory;
 
     @Autowired
-    private SPTFactory sptFactory;
+    private SPTCache sptFactory;
 
     public Response getResponse (TileRequest tileRequest, 
             SPTRequest sptRequestA, SPTRequest sptRequestB, 

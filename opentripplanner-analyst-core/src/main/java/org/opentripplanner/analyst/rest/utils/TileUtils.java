@@ -9,12 +9,7 @@ import java.io.InputStream;
 import javax.imageio.ImageIO;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
-
-import org.opentripplanner.analyst.core.Tile;
-import org.opentripplanner.analyst.request.RenderRequest;
 import org.opentripplanner.analyst.rest.parameter.MIMEImageFormat;
-import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

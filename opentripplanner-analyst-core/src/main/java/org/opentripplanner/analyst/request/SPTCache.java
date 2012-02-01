@@ -18,9 +18,9 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
 @Component
-public class SPTFactory extends CacheLoader<SPTRequest, ShortestPathTree> {
+public class SPTCache extends CacheLoader<SPTRequest, ShortestPathTree> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SPTFactory.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SPTCache.class);
 
     @Autowired
     private GraphService graphService;
@@ -28,7 +28,8 @@ public class SPTFactory extends CacheLoader<SPTRequest, ShortestPathTree> {
     @Autowired
     private GeometryIndexService index;
 
-    private LoadingCache<SPTRequest, ShortestPathTree> sptCache = CacheBuilder.newBuilder()
+    private LoadingCache<SPTRequest, ShortestPathTree> sptCache = CacheBuilder
+            .newBuilder()
             .concurrencyLevel(16)
             .maximumSize(16)
             .build(this);

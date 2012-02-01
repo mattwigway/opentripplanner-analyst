@@ -1,5 +1,6 @@
 package org.opentripplanner.analyst.rest;
  
+import java.io.InputStream;
 import java.util.GregorianCalendar;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -24,7 +25,6 @@ import org.opentripplanner.analyst.rest.parameter.StyleList;
 import org.opentripplanner.analyst.rest.parameter.WMSVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -68,7 +68,7 @@ public class WebMapService {
            @Context UriInfo uriInfo ) throws Exception { 
         
         if (request.equals("getCapabilities")) 
-            return null;
+            return getCapabilitiesResponse();
                     
         LOG.debug("params {}", uriInfo.getQueryParameters());
         LOG.debug("layers = {}", layers);
@@ -84,12 +84,20 @@ public class WebMapService {
 
         bbox.setCoordinateReferenceSystem(srs);
         TileRequest tileRequest = new TileRequest(bbox, width, height);
-        SPTRequest sptRequestA = new SPTRequest(originLon, originLat, time.getTimeInMillis()/1000);
-        SPTRequest sptRequestB = new SPTRequest(originLonB, originLatB, time.getTimeInMillis()/1000);
+        SPTRequest  sptRequestA = new SPTRequest(originLon, originLat, time.getTimeInMillis()/1000);
+        SPTRequest  sptRequestB = new SPTRequest(originLonB, originLatB, time.getTimeInMillis()/1000);
         
         Layer layer = layers.get(0);
         Style style = styles.get(0);
         RenderRequest renderRequest = new RenderRequest(format, layer, style, transparent);
         return renderer.getResponse(tileRequest, sptRequestA, sptRequestB, renderRequest);
     }
+
+    /** Yes, this is loading a static capabilities response from a file 
+     * on the classpath. */
+    private Response getCapabilitiesResponse() throws Exception {
+        InputStream xml = getClass().getResourceAsStream("wms-capabilities.xml");
+        return Response.ok().entity(xml).type("text/xml").build();
+    }
+    
 }
