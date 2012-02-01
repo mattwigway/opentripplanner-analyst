@@ -4,8 +4,13 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.awt.image.IndexColorModel;
 import java.util.Arrays;
+
+import org.geotools.coverage.grid.GridCoverage2D;
+import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
+import org.geotools.geometry.Envelope2D;
+import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.opentripplanner.analyst.request.RenderRequest;
 import org.opentripplanner.analyst.request.TileRequest;
 import org.opentripplanner.analyst.rest.parameter.Style;
@@ -158,7 +163,7 @@ public abstract class Tile {
     }
 
 
-    public BufferedImage generateImageSubtract (
+    public BufferedImage generateImageDifference (
             ShortestPathTree spt1, 
             ShortestPathTree spt2, 
             RenderRequest renderRequest) {
@@ -171,6 +176,12 @@ public abstract class Tile {
             long totalTime,
             RenderRequest renderRequest) {
         return this.linearCombination(-1, spt1, -1, spt2, totalTime, renderRequest);
+    }
+
+    public GridCoverage2D getGridCoverage2D(BufferedImage image) {
+        GridCoverage2D gridCoverage = new GridCoverageFactory()
+            .create("isochrone", image, gg.getEnvelope2D());
+        return gridCoverage;
     }
 
     public abstract Sample[] getSamples();

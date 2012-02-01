@@ -19,7 +19,7 @@ public class TemplateTile extends Tile {
     private static final Logger LOG = LoggerFactory.getLogger(TemplateTile.class);
     Sample[] samples;
     
-    TemplateTile(TileRequest req, SampleSource sampleSource) {
+    public TemplateTile(TileRequest req, SampleSource sampleSource) {
         super(req);
         this.samples = new Sample[width * height];
         CoordinateReferenceSystem crs = gg.getCoordinateReferenceSystem2D(); 

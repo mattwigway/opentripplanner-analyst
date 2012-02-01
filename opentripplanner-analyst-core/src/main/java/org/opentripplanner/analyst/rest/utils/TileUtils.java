@@ -36,11 +36,13 @@ public class TileUtils {
             final InputStream bigInputStream = new ByteArrayInputStream(imgData);
             long t1 = System.currentTimeMillis();
             LOG.debug("wrote image in {}msec", (int)(t1-t0));
-            ResponseBuilder rb = Response.ok(bigInputStream);
             CacheControl cc = new CacheControl();
             cc.setMaxAge(3600);
             cc.setNoCache(false);
-            return rb.cacheControl(cc).build();
+            return Response.ok(bigInputStream)
+                    .type(format.toString())
+                    .cacheControl(cc)
+                    .build();
         } catch (final IOException e) {
             LOG.error("exception while preparing image : {}", e.getMessage());
             return Response.serverError().entity(e.getMessage()).build();

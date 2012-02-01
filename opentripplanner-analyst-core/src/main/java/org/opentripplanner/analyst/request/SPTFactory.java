@@ -11,29 +11,33 @@ import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 
-public class SPTCacheLoader extends CacheLoader<SPTRequest, ShortestPathTree> {
+@Component
+public class SPTFactory extends CacheLoader<SPTRequest, ShortestPathTree> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SPTCacheLoader.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SPTFactory.class);
 
+    @Autowired
     private GraphService graphService;
 
     @Autowired
-    public void setGraphService(GraphService gs) {
-        graphService = gs;
-    }
+    private GeometryIndexService index;
 
-    @Override
+    private LoadingCache<SPTRequest, ShortestPathTree> sptCache = CacheBuilder.newBuilder()
+            .concurrencyLevel(16)
+            .maximumSize(16)
+            .build(this);
+
+    @Override   
+    /** completes the abstract CacheLoader superclass */
     public ShortestPathTree load(SPTRequest req) throws Exception {
         LOG.debug("spt cache miss : {}", req);
-
-        Graph graph = graphService.getGraph();
-        GeometryIndexService index = graph.getService(GeometryIndexService.class);
-
         Vertex origin = index.getNearestPedestrianStreetVertex(req.lon, req.lat);
-
         TraverseOptions options = getOptions(origin, req.time);
         State initialState = new State(req.time, origin, options);
         LOG.debug("initial state: {}", initialState);
@@ -45,6 +49,10 @@ public class SPTCacheLoader extends CacheLoader<SPTRequest, ShortestPathTree> {
         return spt;
     }
 
+    public ShortestPathTree get(SPTRequest req) throws Exception {
+        return req == null ? null : sptCache.get(req);
+    }
+    
     private TraverseOptions getOptions(Vertex origin, long t) {
         Graph graph = graphService.getGraph();
         TraverseOptions options = new TraverseOptions();

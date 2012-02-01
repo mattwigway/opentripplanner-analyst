@@ -15,7 +15,7 @@ public class DynamicTile extends Tile {
     private static final Logger LOG = LoggerFactory.getLogger(DynamicTile.class);
     final SampleSource ss;
     
-    DynamicTile(TileRequest req, SampleSource sampleSource) {
+    public DynamicTile(TileRequest req, SampleSource sampleSource) {
         super(req);
         this.ss = sampleSource;
     }

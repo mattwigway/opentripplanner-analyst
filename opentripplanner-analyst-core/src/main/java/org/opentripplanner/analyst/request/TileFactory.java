@@ -1,13 +1,25 @@
-package org.opentripplanner.analyst.core;
+package org.opentripplanner.analyst.request;
 
+import org.opentripplanner.analyst.core.DynamicTile;
+import org.opentripplanner.analyst.core.GeometryIndex;
+import org.opentripplanner.analyst.core.Sample;
+import org.opentripplanner.analyst.core.SampleSource;
+import org.opentripplanner.analyst.core.TemplateTile;
+import org.opentripplanner.analyst.core.Tile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import java.util.List;
 
 import org.opentripplanner.analyst.request.SampleCache;
 import org.opentripplanner.analyst.request.TileRequest;
-import org.opentripplanner.routing.core.Graph;
 import org.opentripplanner.routing.edgetype.StreetVertex;
 import org.opentripplanner.routing.impl.DistanceLibrary;
-import org.opentripplanner.routing.services.GraphService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
@@ -20,20 +32,34 @@ import com.vividsolutions.jts.linearref.LocationIndexedLine;
 import com.vividsolutions.jts.operation.distance.DistanceOp;
 import com.vividsolutions.jts.operation.distance.GeometryLocation;
 
-public class TileFactory implements SampleSource {   
-    private static final GeometryFactory factory = new GeometryFactory();
-    private static final double SEARCH_RADIUS_M = 100; // meters
-    private static final double SEARCH_RADIUS_DEG = 
-            DistanceLibrary.metersToDegrees(SEARCH_RADIUS_M);
-
-    private Graph graph;
-    private GeometryIndex index;
-    private SampleCache sampleCache = new SampleCache(this);
+@Component
+public class TileFactory extends CacheLoader<TileRequest, Tile> 
+    implements SampleSource { 
     
-    public void setGraphService(GraphService gs) {
-        graph = gs.getGraph();
-        index = new GeometryIndex(graph);
-        graph.putService(GeometryIndexService.class, index);
+    private static final Logger LOG = LoggerFactory.getLogger(TileFactory.class);
+    private static final GeometryFactory geometryFactory = new GeometryFactory();
+    private static final double SEARCH_RADIUS_M = 100; // meters
+    private static final double SEARCH_RADIUS_DEG = DistanceLibrary.metersToDegrees(SEARCH_RADIUS_M);
+
+    @Autowired
+    private GeometryIndex index;
+
+    private final SampleCache sampleCache = new SampleCache(this);
+    
+    private LoadingCache<TileRequest, Tile> tileCache = CacheBuilder.newBuilder()
+            .concurrencyLevel(16)
+            .softValues()
+            .build(this);
+
+    @Override
+    /** completes the abstract CacheLoader superclass */
+    public Tile load(TileRequest req) throws Exception {
+        return makeTemplateTile(req);
+    }
+
+    /** delegate to the tile LoadingCache */
+    public Tile get(TileRequest req) throws Exception {
+        return tileCache.get(req);
     }
     
     public Tile makeTemplateTile(TileRequest req) {
@@ -44,11 +70,11 @@ public class TileFactory implements SampleSource {
         return new DynamicTile(req, this.sampleCache);
     }
 
-    /* SampleSource interface */
     @Override
+    /** implements SampleSource interface */
     public Sample getSample(double lon, double lat) {
         Coordinate c = new Coordinate(lon, lat);
-        Point p = factory.createPoint(c);
+        Point p = geometryFactory.createPoint(c);
         
         // track best two turn vertices
         StreetVertex v0 = null;

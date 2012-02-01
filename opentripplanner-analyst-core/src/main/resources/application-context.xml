@@ -7,11 +7,15 @@
            http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.0.xsd
            http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.0.xsd
            http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-2.0.xsd">
-
-    <import resource="classpath:org/opentripplanner/application-context.xml" />
-
+	    
+	<import resource="classpath:org/opentripplanner/application-context.xml" />
+	
 	<bean id="graphService" class="org.opentripplanner.routing.impl.GraphServiceImpl">
 		<property name="bundle" ref="graphBundle" />
+	</bean>
+
+	<bean id="graphBundle" class="org.opentripplanner.model.GraphBundle">
+		<property name="path" value="/home/syncopate/otp_data/pdx/" />
 	</bean>
 
 	<context:component-scan base-package="org.opentripplanner.analyst"/>

@@ -8,8 +8,11 @@ import org.opentripplanner.routing.core.Vertex;
 import org.opentripplanner.routing.edgetype.StreetTraversalPermission;
 import org.opentripplanner.routing.edgetype.StreetVertex;
 import org.opentripplanner.routing.impl.DistanceLibrary;
+import org.opentripplanner.routing.services.GraphService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
@@ -19,27 +22,20 @@ import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.index.strtree.STRtree;
 import com.vividsolutions.jts.operation.distance.DistanceOp;
 
+@Component
 public class GeometryIndex implements GeometryIndexService {
+    
     private static final Logger LOG = LoggerFactory.getLogger(GeometryIndex.class);
-
     private static final double SEARCH_RADIUS_M = 100; // meters
-
-    private static final double SEARCH_RADIUS_DEG = DistanceLibrary
-            .metersToDegrees(SEARCH_RADIUS_M);
-
-    private STRtree pedestrianIndex;
-    private STRtree index;
+    private static final double SEARCH_RADIUS_DEG = DistanceLibrary.metersToDegrees(SEARCH_RADIUS_M);
 
     private GeometryFactory geometryFactory = new GeometryFactory();
-
-    public static void ensureIndexed(Graph graph) {
-        GeometryIndexService index = graph.getService(GeometryIndexService.class);
-        if (index == null) {
-            graph.putService(GeometryIndexService.class, new GeometryIndex(graph));
-        }
-    }
+    private STRtree pedestrianIndex;
+    private STRtree index;
     
-    GeometryIndex(Graph graph) {
+    @Autowired
+    public void setGraphService(GraphService graphService) {
+        Graph graph = graphService.getGraph();
         // build a spatial index of road geometries (not individual edges)
         pedestrianIndex = new STRtree();
         index = new STRtree();
@@ -51,6 +47,7 @@ public class GeometryIndex implements GeometryIndexService {
             index.insert(geom.getEnvelopeInternal(), tv);
         }
         pedestrianIndex.build();
+        index.build();
         LOG.debug("spatial index size: {}", pedestrianIndex.size());
     }
 
@@ -61,7 +58,7 @@ public class GeometryIndex implements GeometryIndexService {
     
     @SuppressWarnings("rawtypes")
     public List query(Envelope env) {
-        return pedestrianIndex.query(env);
+        return index.query(env);
     }
 
     @Override
