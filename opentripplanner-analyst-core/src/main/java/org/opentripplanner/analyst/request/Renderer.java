@@ -33,7 +33,7 @@ public class Renderer {
             image = tile.generateImageDifference(sptA, sptB, renderRequest);
             break;
         case HAGERSTRAND :
-            long elapsed = sptRequestB.time - sptRequestA.time;
+            long elapsed = Math.abs(sptRequestB.time - sptRequestA.time);
             image = tile.generateImageHagerstrand(sptA, sptB, elapsed, renderRequest);
             break;
         case TRAVELTIME :

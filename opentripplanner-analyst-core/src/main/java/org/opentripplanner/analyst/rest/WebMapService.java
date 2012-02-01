@@ -62,9 +62,9 @@ public class WebMapService {
            // Sample dimensions
            @QueryParam("DIM_ORIGINLON") Float originLon, 
            @QueryParam("DIM_ORIGINLAT") Float originLat,
+           @QueryParam("DIM_TIMEB") GregorianCalendar timeB,
            @QueryParam("DIM_ORIGINLONB") Float originLonB, 
            @QueryParam("DIM_ORIGINLATB") Float originLatB,
-           @QueryParam("DIM_ELAPSED") Long elapsed,
            @Context UriInfo uriInfo ) throws Exception { 
         
         if (request.equals("getCapabilities")) 
@@ -85,7 +85,7 @@ public class WebMapService {
         bbox.setCoordinateReferenceSystem(srs);
         TileRequest tileRequest = new TileRequest(bbox, width, height);
         SPTRequest  sptRequestA = new SPTRequest(originLon, originLat, time.getTimeInMillis()/1000);
-        SPTRequest  sptRequestB = new SPTRequest(originLonB, originLatB, time.getTimeInMillis()/1000);
+        SPTRequest  sptRequestB = new SPTRequest(originLonB, originLatB, timeB.getTimeInMillis()/1000);
         
         Layer layer = layers.get(0);
         Style style = styles.get(0);
