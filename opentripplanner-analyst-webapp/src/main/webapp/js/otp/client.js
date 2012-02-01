@@ -12,7 +12,9 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-var portland = new L.LatLng(45.5191, -122.6745); 
+var portland     = new L.LatLng(45.5191, -122.6745); 
+var portlandEast = new L.LatLng(45.5191, -122.6600); 
+
 var map = new L.Map('map', {
 	minZoom : 09,
 	maxZoom : 18
@@ -34,12 +36,12 @@ var aerAttrib = 'Map data &copy; 2011 OpenStreetMap contributors';
 var aerLayer = new L.TileLayer(arrayAerial[0], {maxZoom: 18, attribution: aerAttrib});
 
 var analyst = new L.TileLayer.WMS("http://localhost:8080/opentripplanner-analyst-core/wms", {
-    layers: 'traveltime',
-    styles: 'color30',
+    layers: 'hagerstrand',
+    styles: 'transparent',
     format: 'image/png',
     transparent: true,
-    DIM_ELAPSED: 120,
-    time: "2011-12-06T08:00:00Z",
+    time:      "2011-12-06T08:00:00Z",
+    DIM_TIMEB: "2011-12-06T09:30:00Z",
     attribution: osmAttrib
 });
 
@@ -48,21 +50,46 @@ var analystTile = new L.TileLayer(
 	{ attribution: osmAttrib }
 );
 
-var refresh = function (ll) {
+var refresh = function () {
+	var o = origMarker.getLatLng();
+	var d = destMarker.getLatLng();
 	map.removeLayer(analyst);
-    analyst.wmsParams.DIM_ORIGINLATB = analyst.wmsParams.DIM_ORIGINLAT;
-    analyst.wmsParams.DIM_ORIGINLONB = analyst.wmsParams.DIM_ORIGINLON;
-    analyst.wmsParams.DIM_ORIGINLAT = ll.lat;
-    analyst.wmsParams.DIM_ORIGINLON = ll.lng;
+    analyst.wmsParams.DIM_ORIGINLAT  = o.lat;
+    analyst.wmsParams.DIM_ORIGINLON  = o.lng;
+    analyst.wmsParams.DIM_ORIGINLATB = d.lat;
+    analyst.wmsParams.DIM_ORIGINLONB = d.lng;
     map.addLayer(analyst);
 };
 
 map.on('click', function(e) {
-	refresh(e.latlng);
+	refresh(e.latlng, e.latlng);
 });
 
-map.setView(portland, 13);
+var baseMaps = {
+    "OSM": osmLayer,
+    "Aerial Photo": aerLayer
+};
+	        
+var overlayMaps = {
+    "Analyst WMS": analyst,
+    "Analyst Tiles": analystTile
+};
+
+	        
+
+var origMarker = new L.Marker(portland, {draggable: true});
+var destMarker = new L.Marker(portlandEast, {draggable: true});
+//marker.bindPopup("I am marker.");
+origMarker.on('dragend', refresh);
+destMarker.on('dragend', refresh);
+
 map.addLayer(aerLayer);
 map.addLayer(analyst);
+map.addLayer(origMarker);
+map.addLayer(destMarker);
+map.setView(portland, 13);
 
-refresh(portland);
+//var layersControl = new L.Control.Layers(baseMaps, overlayMaps);
+//map.addControl(layersControl);
+
+refresh();
