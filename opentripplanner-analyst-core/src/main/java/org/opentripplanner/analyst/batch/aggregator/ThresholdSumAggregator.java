@@ -22,7 +22,7 @@ public class ThresholdSumAggregator implements Aggregator {
 	@Override
 	public double computeAggregate(Population destinations, ShortestPathTree spt) {
 		double result = 0;
-		for (Individual destination : destinations.individuals)
+		for (Individual destination : destinations)
 			if (destination.sample.eval(spt) < thresholdSeconds)
 				result += destination.data;
 

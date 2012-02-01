@@ -13,8 +13,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class BatchProcessor {
 
-    private static final String CONFIG = "application-context.xml";
     private static final Logger LOG = LoggerFactory.getLogger(BatchProcessor.class);
+    private static final String CONFIG = "application-context.xml";
 
     @Autowired
     Renderer renderer;

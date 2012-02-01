@@ -19,7 +19,7 @@ public class WeightedAverageAggregator implements Aggregator {
 	public double computeAggregate(Population destinations, ShortestPathTree spt) {
 		double result = 0;
 		int n = 0;
-		for (Individual destination : destinations.individuals) {
+		for (Individual destination : destinations) {
 			if (Double.isInfinite(destination.data))
 				continue;
 			double t = destination.sample.eval(spt);

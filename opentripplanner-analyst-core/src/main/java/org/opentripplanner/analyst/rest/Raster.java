@@ -9,6 +9,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 
+import org.geotools.geometry.Envelope2D;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opentripplanner.analyst.core.GeometryIndex;
 import org.opentripplanner.analyst.request.RenderRequest;
@@ -42,15 +43,15 @@ public class Raster {
     public Response getRaster(
            @QueryParam("x") Float x,  
            @QueryParam("y") Float y,  
-           @QueryParam("width")  Float width,  
-           @QueryParam("height") Float height,  
+           @QueryParam("width")  Integer width,  
+           @QueryParam("height") Integer height,  
            @QueryParam("time") GregorianCalendar time,
            @QueryParam("crs") // default is WGS84 lat/lon
            @DefaultValue("EPSG:4326") CoordinateReferenceSystem crs ) throws Exception {
         
         //com.vividsolutions.jts.geom.Envelope graphEnvelope = graph.getExtent();
 
-        Envelope2D bbox = index.getBoundingEnvelope(srs);
+        Envelope2D bbox = null; //index.getBoundingEnvelope(srs);
         TileRequest tileRequest = new TileRequest(bbox, width, height);
         SPTRequest sptRequest = new SPTRequest(x, y, time);
         RenderRequest renderRequest = new RenderRequest(

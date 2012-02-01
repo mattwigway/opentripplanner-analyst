@@ -1,6 +1,5 @@
 package org.opentripplanner.analyst.batch;
 
-import org.opentripplanner.analyst.core.Tile;
 import org.opentripplanner.analyst.core.Sample;
 
 /**
@@ -23,6 +22,10 @@ public class Individual {
         this.data = data;
         this.lon = lon;
         this.lat = lat;
+    }
+    
+    public Population asPopulation() {
+        return new Population(this);
     }
     
 }
