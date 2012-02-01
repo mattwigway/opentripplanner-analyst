@@ -115,7 +115,7 @@ public class PopulationFactory {
     
     /** Load a raster file as an otp batch analysis population */
     public RasterPopulation loadRaster(String filename) {
-        RasterPopulation population = new RasterPopulation();
+        RasterPopulation population = null;
         LOG.debug("Loading population from raster file {}", filename);
         try {
             File rasterFile = new File(filename);
@@ -143,12 +143,16 @@ public class PopulationFactory {
             GridGeometry2D gridGeometry = cov.getGridGeometry();
             GridEnvelope2D gridEnvelope = gridGeometry.getGridRange2D();
             
+            int width  = gridEnvelope.width;
+            int height = gridEnvelope.height;
+            population = new RasterPopulation(width, height);
+
             // grid coordinate object to be reused for reading each cell in the raster
             GridCoordinates2D coord = new GridCoordinates2D();
             // evaluating a raster returns an array of results, in this case 1D
             int[] val = new int[1];
-            for (int gy = gridEnvelope.y, iy = 0; iy < gridEnvelope.height; gy++, iy++) {
-                for (int gx = gridEnvelope.x, ix = 0; ix < gridEnvelope.width; gx++, ix++) {
+            for (int gy = gridEnvelope.y, iy = 0; iy < height; gy++, iy++) {
+                for (int gx = gridEnvelope.x, ix = 0; ix < width; gx++, ix++) {
                     coord.x = gx;
                     coord.y = gy;
                     // find coordinates for current raster cell in raster CRS
