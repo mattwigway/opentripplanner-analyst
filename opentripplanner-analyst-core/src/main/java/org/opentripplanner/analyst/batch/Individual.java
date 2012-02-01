@@ -12,14 +12,12 @@ import org.opentripplanner.analyst.core.Sample;
  */
 public class Individual {
 
-    public final Object id;
-    public final Sample sample;
+    public final String  id;
+    public final Sample  sample;
     public final double data;
     public final double lon, lat;
     
-    public Individual(Object id, double lon, double lat, double data) {
-        // TODO: makesample is no longer static, move to 
-        Sample sample = null; //Tile.makeSample(0, 0, lon, lat);
+    public Individual(String id, Sample sample, double lon, double lat, double data) {
         this.id = id;
         this.sample = sample;
         this.data = data;
