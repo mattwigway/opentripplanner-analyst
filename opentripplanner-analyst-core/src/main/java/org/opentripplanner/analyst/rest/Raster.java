@@ -55,8 +55,7 @@ public class Raster {
         TileRequest tileRequest = new TileRequest(bbox, width, height);
         SPTRequest sptRequest = new SPTRequest(x, y, time);
         RenderRequest renderRequest = new RenderRequest(
-                new MIMEImageFormat("text/geotiff"), 
-                Layer.TRAVELTIME, Style.GRAY, false);
+                format, Layer.TRAVELTIME, Style.GRAY, false);
 
         return renderer.getResponse(tileRequest, sptRequest, null, renderRequest);
         
