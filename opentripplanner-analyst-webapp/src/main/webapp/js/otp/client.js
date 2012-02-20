@@ -89,7 +89,7 @@ map.addLayer(origMarker);
 map.addLayer(destMarker);
 map.setView(portland, 13);
 
-//var layersControl = new L.Control.Layers(baseMaps, overlayMaps);
-//map.addControl(layersControl);
+var layersControl = new L.Control.Layers(baseMaps, overlayMaps);
+map.addControl(layersControl);
 
 refresh();
