@@ -58,7 +58,7 @@ public class Renderer {
         }
         
         // geotiff kludge
-        if (renderRequest.format.equals("image/geotiff")) {
+        if (renderRequest.format.toString().equals("image/geotiff")) {
             GridCoverage2D gc = tile.getGridCoverage2D(image);
             return generateStreamingGeotiffResponse(gc);
         } else {
@@ -102,7 +102,6 @@ public class Renderer {
         StreamingOutput streamingOutput = new StreamingOutput() {
             public void write(OutputStream outStream) {
                 try {
-                    LOG.debug("writing geotiff ");
                     long t0 = System.currentTimeMillis();
                     GeoTiffWriteParams wp = new GeoTiffWriteParams();
                     wp.setCompressionMode(GeoTiffWriteParams.MODE_EXPLICIT);
@@ -110,8 +109,9 @@ public class Renderer {
                     ParameterValueGroup params = new GeoTiffFormat().getWriteParameters();
                     params.parameter(AbstractGridFormat.GEOTOOLS_WRITE_PARAMS.getName().toString()).setValue(wp);
                     new GeoTiffWriter(outStream).write(coverage, (GeneralParameterValue[]) params.values().toArray(new GeneralParameterValue[1]));
+                    new GeoTiffWriter(outStream).write(coverage, null);
                     long t1 = System.currentTimeMillis();
-                    System.out.printf("%dmsec\n", (int)(t1-t0));
+                    LOG.debug("wrote geotiff in {}msec", t1-t0);
                 } catch (Exception e) {
                     LOG.error("exception while preparing geotiff : {}", e.getMessage());
                     throw new WebApplicationException(e);
