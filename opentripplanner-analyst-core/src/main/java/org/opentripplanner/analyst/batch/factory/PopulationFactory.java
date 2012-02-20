@@ -114,7 +114,7 @@ public class PopulationFactory {
     }
     
     /** Load a raster file as an otp batch analysis population */
-    public RasterPopulation loadRaster(String filename) {
+    public RasterPopulation fromRaster(String filename) {
         RasterPopulation population = null;
         LOG.debug("Loading population from raster file {}", filename);
         try {
