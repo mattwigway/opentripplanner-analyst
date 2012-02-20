@@ -39,7 +39,7 @@ public class Raster {
     @InjectParam
     private Renderer renderer;
     
-    @GET @Produces("image/geotiff")
+    @GET @Produces("image/*")
     public Response getRaster(
            @QueryParam("x") Float x,  
            @QueryParam("y") Float y,  
