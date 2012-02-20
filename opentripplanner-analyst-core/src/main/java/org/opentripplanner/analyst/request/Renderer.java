@@ -12,7 +12,6 @@ import javax.ws.rs.core.StreamingOutput;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.opentripplanner.analyst.core.Tile;
 import org.opentripplanner.analyst.rest.parameter.MIMEImageFormat;
-import org.opentripplanner.analyst.rest.utils.TileUtils;
 import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
