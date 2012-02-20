@@ -15,7 +15,6 @@ import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
-@Component
 public class BatchProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(BatchProcessor.class);
@@ -37,7 +36,6 @@ public class BatchProcessor {
         ctx.refresh();
         ctx.registerShutdownHook();
         //ctx.getBean(BatchProcessor.class).run();
-        
     }
 
     // actually probably better to run explicitly, so batch processor will do nothing unless it

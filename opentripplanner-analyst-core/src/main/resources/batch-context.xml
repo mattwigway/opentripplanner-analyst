@@ -21,4 +21,6 @@
 	<bean id="destinations" class="org.opentripplanner.analyst.batch.Population" />
 	<bean id="aggreagator" class="org.opentripplanner.analyst.batch.aggregator.ThresholdSumAggregator" />
 
+	<bean id="batchProcessor" class="org.opentripplanner.analyst.batch.BatchProcessor" />
+
 </beans>
