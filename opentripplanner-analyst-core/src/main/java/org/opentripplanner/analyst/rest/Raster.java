@@ -38,7 +38,7 @@ public class Raster {
 
     @InjectParam
     private Renderer renderer;
-
+    
     @GET @Produces("image/geotiff")
     public Response getRaster(
            @QueryParam("x") Float x,  
@@ -46,12 +46,12 @@ public class Raster {
            @QueryParam("width")  Integer width,  
            @QueryParam("height") Integer height,  
            @QueryParam("time") GregorianCalendar time,
-           @QueryParam("crs") // default is WGS84 lat/lon
-           @DefaultValue("EPSG:4326") CoordinateReferenceSystem crs ) throws Exception {
+           @QueryParam("format") @DefaultValue("image/geotiff") MIMEImageFormat format,
+           @QueryParam("crs") @DefaultValue("EPSG:4326") CoordinateReferenceSystem crs 
+           ) throws Exception {
         
-        //com.vividsolutions.jts.geom.Envelope graphEnvelope = graph.getExtent();
-
-        Envelope2D bbox = null; //index.getBoundingEnvelope(srs);
+        // BoundingBox is a subclass of Envelope, an Envelope2D constructor parameter
+        Envelope2D bbox = new Envelope2D(index.getBoundingBox(crs));
         TileRequest tileRequest = new TileRequest(bbox, width, height);
         SPTRequest sptRequest = new SPTRequest(x, y, time);
         RenderRequest renderRequest = new RenderRequest(
