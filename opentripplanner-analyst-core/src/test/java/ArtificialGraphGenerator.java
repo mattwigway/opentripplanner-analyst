@@ -1,12 +1,10 @@
-import static org.opentripplanner.common.IterableLibrary.filter;
-
 import org.opentripplanner.common.geometry.GeometryUtils;
-import org.opentripplanner.routing.core.DirectEdge;
-import org.opentripplanner.routing.core.Graph;
-import org.opentripplanner.routing.core.Vertex;
-import org.opentripplanner.routing.edgetype.EndpointVertex;
+import org.opentripplanner.routing.graph.Edge;
+import org.opentripplanner.routing.graph.Graph;
+import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.edgetype.FreeEdge;
-import org.opentripplanner.routing.edgetype.StreetVertex;
+import org.opentripplanner.routing.vertextype.IntersectionVertex;
+import org.opentripplanner.routing.vertextype.TurnVertex;
 import org.opentripplanner.routing.edgetype.TurnEdge;
 
 import com.vividsolutions.jts.geom.LineString;
@@ -31,12 +29,10 @@ public class ArtificialGraphGenerator {
             for (int x = 0; x < N; ++x) {
                 double xc = x * STEP + LON0;
                 double yc = y * STEP + LAT0;
-                Vertex in = new EndpointVertex("(" + x + ", " + y + ") in", xc, yc);
-                graph.addVertex(in);
+                Vertex in = new IntersectionVertex(graph, "(" + x + ", " + y + ") in", xc, yc);
                 verticesIn[y][x] = in;
 
-                Vertex out = new EndpointVertex("(" + x + ", " + y + ") out", xc, yc);
-                graph.addVertex(out);
+                Vertex out = new IntersectionVertex(graph, "(" + x + ", " + y + ") out", xc, yc);
                 verticesOut[y][x] = out;
             }
         }
@@ -57,48 +53,42 @@ public class ArtificialGraphGenerator {
                 double lat = i * STEP + LAT0;
                 double d = 111.111;
                 LineString geometry = GeometryUtils.makeLineString(lon, lat, lon + STEP, lat);
-                StreetVertex we = new StreetVertex("a(" + j + ", " + i + ")", geometry, "", d, false, null);
-                StreetVertex ew = new StreetVertex("a(" + j + ", " + i + ")", (LineString) geometry.reverse(), "", d, true, null);
+                TurnVertex we = new TurnVertex(graph, "a(" + j + ", " + i + ")", geometry, "", d, false, null);
+                TurnVertex ew = new TurnVertex(graph, "a(" + j + ", " + i + ")", (LineString) geometry.reverse(), "", d, true, null);
                 
-                graph.addVertex(we);
-                graph.addVertex(ew);
-
                 lon = i * STEP + LON0;
                 lat = j * STEP + LAT0;
                 d = 111.111;
                 geometry = GeometryUtils.makeLineString(lon, lat, lon, lat + STEP);
-                StreetVertex sn = new StreetVertex("d(" + i + ", " + j + ")", geometry, "", d, false, null);
-                StreetVertex ns = new StreetVertex("d(" + i + ", " + j + ")", (LineString) geometry.reverse(), "", d, true, null);
-
-                graph.addVertex(sn);
-                graph.addVertex(ns);
+                TurnVertex sn = new TurnVertex(graph, "d(" + i + ", " + j + ")", geometry, "", d, false, null);
+                TurnVertex ns = new TurnVertex(graph, "d(" + i + ", " + j + ")", (LineString) geometry.reverse(), "", d, true, null);
+               
+                new FreeEdge(verticesOut[i][j], we);
+                new FreeEdge(verticesOut[j][i], sn);
                 
-                graph.addEdge(new FreeEdge(verticesOut[i][j], we));
-                graph.addEdge(new FreeEdge(verticesOut[j][i], sn));
+                new FreeEdge(verticesOut[i][j + 1], ew);
+                new FreeEdge(verticesOut[j + 1][i], ns);
                 
-                graph.addEdge(new FreeEdge(verticesOut[i][j + 1], ew));
-                graph.addEdge(new FreeEdge(verticesOut[j + 1][i], ns));
-                
-                graph.addEdge(new FreeEdge(ew, verticesIn[i][j]));
-                graph.addEdge(new FreeEdge(ns, verticesIn[j][i]));
+                new FreeEdge(ew, verticesIn[i][j]);
+                new FreeEdge(ns, verticesIn[j][i]);
             
-                graph.addEdge(new FreeEdge(we, verticesIn[i][j + 1]));
-                graph.addEdge(new FreeEdge(sn, verticesIn[j + 1][i]));
+                new FreeEdge(we, verticesIn[i][j + 1]);
+                new FreeEdge(sn, verticesIn[j + 1][i]);
             }
         }
 
         for (int y = 0; y < N; ++y) {
             for (int x = 0; x < N; ++x) {
                 Vertex vertexIn = verticesIn[y][x];
-                for (DirectEdge e1: filter(vertexIn.getIncoming(),DirectEdge.class)) {
+                for (Edge e1: vertexIn.getIncoming()) {
                     Vertex vertexOut = verticesOut[y][x];
-                    StreetVertex fromv = (StreetVertex) e1.getFromVertex();
-                    for (DirectEdge e2: filter(vertexOut.getOutgoing(),DirectEdge.class)) {
-                        StreetVertex tov = (StreetVertex) e2.getToVertex();
+                    TurnVertex fromv = (TurnVertex) e1.getFromVertex();
+                    for (Edge e2: vertexOut.getOutgoing()) {
+                        TurnVertex tov = (TurnVertex) e2.getToVertex();
                         if (tov.getEdgeId().equals(fromv.getEdgeId())) {
                             continue;
                         }
-                        graph.addEdge(new TurnEdge(fromv, tov));
+                        new TurnEdge(fromv, tov);
                     }
                 }
             }

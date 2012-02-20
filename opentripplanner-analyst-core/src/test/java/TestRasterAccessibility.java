@@ -7,10 +7,10 @@ import junit.framework.TestCase;
 
 import org.junit.Before;
 import org.opentripplanner.routing.algorithm.strategies.SkipTraverseResultStrategy;
-import org.opentripplanner.routing.core.Graph;
+import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.TraverseOptions;
-import org.opentripplanner.routing.core.Vertex;
+import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.impl.GraphServiceImpl;
 import org.opentripplanner.routing.services.GraphService;
 import org.opentripplanner.routing.spt.MultiShortestPathTree;

@@ -5,7 +5,7 @@ import java.util.List;
 import org.opentripplanner.analyst.core.GeometryIndex;
 import org.opentripplanner.analyst.core.Sample;
 import org.opentripplanner.analyst.core.SampleSource;
-import org.opentripplanner.routing.edgetype.StreetVertex;
+import org.opentripplanner.routing.vertextype.TurnVertex;
 import org.opentripplanner.routing.impl.DistanceLibrary;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -38,8 +38,8 @@ public class SampleFactory implements SampleSource {
         Point p = geometryFactory.createPoint(c);
         
         // track best two turn vertices
-        StreetVertex v0 = null;
-        StreetVertex v1 = null;
+        TurnVertex v0 = null;
+        TurnVertex v1 = null;
         DistanceOp o0 = null;
         DistanceOp o1 = null;
         double d0 = Double.MAX_VALUE;
@@ -49,11 +49,11 @@ public class SampleFactory implements SampleSource {
         Envelope env = new Envelope(c);
         env.expandBy(SEARCH_RADIUS_DEG, SEARCH_RADIUS_DEG);
         @SuppressWarnings("unchecked")
-        List<StreetVertex> vs = (List<StreetVertex>) index.query(env);
+        List<TurnVertex> vs = (List<TurnVertex>) index.query(env);
         // query always returns a (possibly empty) list, but never null
         
         // find two closest among nearby geometries
-        for (StreetVertex v : vs) {
+        for (TurnVertex v : vs) {
             Geometry g = v.getGeometry();
             DistanceOp o = new DistanceOp(p, g);
             double d = o.distance();
@@ -85,7 +85,7 @@ public class SampleFactory implements SampleSource {
         return null;
     }
 
-    private static int timeToVertex(StreetVertex v, DistanceOp o) {
+    private static int timeToVertex(TurnVertex v, DistanceOp o) {
         if (v == null)
             return -1;
         GeometryLocation[] gl = o.nearestLocations();

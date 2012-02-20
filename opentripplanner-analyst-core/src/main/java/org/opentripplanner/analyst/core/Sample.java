@@ -1,7 +1,7 @@
 package org.opentripplanner.analyst.core;
 
 import org.opentripplanner.routing.core.State;
-import org.opentripplanner.routing.core.Vertex;
+import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.spt.ShortestPathTree;
 
 public class Sample {

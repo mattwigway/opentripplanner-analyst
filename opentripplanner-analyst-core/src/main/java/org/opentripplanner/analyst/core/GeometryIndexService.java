@@ -5,7 +5,7 @@ import java.util.List;
 import org.geotools.geometry.Envelope2D;
 import org.opengis.geometry.BoundingBox;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opentripplanner.routing.core.Vertex;
+import org.opentripplanner.routing.graph.Vertex;
 
 import com.vividsolutions.jts.geom.Envelope;
 

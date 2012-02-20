@@ -7,10 +7,10 @@ import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.opengis.geometry.BoundingBox;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opentripplanner.common.IterableLibrary;
-import org.opentripplanner.routing.core.Graph;
-import org.opentripplanner.routing.core.Vertex;
+import org.opentripplanner.routing.graph.Graph;
+import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.edgetype.StreetTraversalPermission;
-import org.opentripplanner.routing.edgetype.StreetVertex;
+import org.opentripplanner.routing.vertextype.TurnVertex;
 import org.opentripplanner.routing.impl.DistanceLibrary;
 import org.opentripplanner.routing.services.GraphService;
 import org.slf4j.Logger;
@@ -43,7 +43,7 @@ public class GeometryIndex implements GeometryIndexService {
         // build a spatial index of road geometries (not individual edges)
         pedestrianIndex = new STRtree();
         index = new STRtree();
-        for (StreetVertex tv : IterableLibrary.filter(graph.getVertices(), StreetVertex.class)) {
+        for (TurnVertex tv : IterableLibrary.filter(graph.getVertices(), TurnVertex.class)) {
             Geometry geom = tv.getGeometry();
             if (tv.getPermission().allows(StreetTraversalPermission.PEDESTRIAN)) {
                 pedestrianIndex.insert(geom.getEnvelopeInternal(), tv);
@@ -71,18 +71,18 @@ public class GeometryIndex implements GeometryIndexService {
         Point p = geometryFactory.createPoint(c);
 
         // track best two turn vertices
-        StreetVertex closestVertex = null;
+        TurnVertex closestVertex = null;
         double bestDistance = Double.MAX_VALUE;
 
         // query
         Envelope env = new Envelope(c);
         env.expandBy(SEARCH_RADIUS_DEG, SEARCH_RADIUS_DEG);
         @SuppressWarnings("unchecked")
-        List<StreetVertex> vs = (List<StreetVertex>) pedestrianIndex.query(env);
+        List<TurnVertex> vs = (List<TurnVertex>) pedestrianIndex.query(env);
         // query always returns a (possibly empty) list, but never null
 
         // find two closest among nearby geometries
-        for (StreetVertex v : vs) {
+        for (TurnVertex v : vs) {
             Geometry g = v.getGeometry();
             DistanceOp o = new DistanceOp(p, g);
             double d = o.distance();
