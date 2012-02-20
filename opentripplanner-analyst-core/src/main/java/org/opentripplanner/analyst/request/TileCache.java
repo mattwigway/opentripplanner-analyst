@@ -1,6 +1,5 @@
 package org.opentripplanner.analyst.request;
 
-import org.opentripplanner.analyst.core.DynamicTile;
 import org.opentripplanner.analyst.core.TemplateTile;
 import org.opentripplanner.analyst.core.Tile;
 import org.slf4j.Logger;
@@ -32,8 +31,8 @@ public class TileCache extends CacheLoader<TileRequest, Tile> {
     @Override
     /** completes the abstract CacheLoader superclass */
     public Tile load(TileRequest req) throws Exception {
-        //return new TemplateTile(req, sampleFactory);
-        return new DynamicTile(req, sampleCache);
+        return new TemplateTile(req, sampleFactory);
+        //return new DynamicTile(req, sampleCache);
     }
 
     /** delegate to the tile LoadingCache */
