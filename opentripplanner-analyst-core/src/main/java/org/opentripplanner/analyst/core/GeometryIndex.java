@@ -3,8 +3,10 @@ package org.opentripplanner.analyst.core;
 import java.util.List;
 
 import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.opengis.geometry.BoundingBox;
+import org.opengis.referencing.crs.CRSAuthorityFactory;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opentripplanner.common.IterableLibrary;
 import org.opentripplanner.routing.graph.Graph;
@@ -101,7 +103,7 @@ public class GeometryIndex implements GeometryIndexService {
     public BoundingBox getBoundingBox(CoordinateReferenceSystem crs) {
         try {
             Envelope bounds = (Envelope) index.getRoot().getBounds();
-            ReferencedEnvelope refEnv = new ReferencedEnvelope(bounds, DefaultGeographicCRS.WGS84);
+            ReferencedEnvelope refEnv = new ReferencedEnvelope(bounds, CRS.decode("EPSG:4326", true));
             return refEnv.toBounds(crs);
         } catch (Exception e) {
             LOG.error("error transforming graph bounding box to request CRS : {}", crs);
