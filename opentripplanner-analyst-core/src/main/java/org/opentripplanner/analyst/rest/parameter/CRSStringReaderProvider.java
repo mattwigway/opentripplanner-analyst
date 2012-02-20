@@ -32,7 +32,7 @@ public class CRSStringReaderProvider implements StringReaderProvider {
         @Override
         public CoordinateReferenceSystem fromString(String crsName) {
             try {
-                return CRS.decode(crsName);
+                return CRS.decode(crsName, true);
             } catch (Exception e) {
                 throw new WebApplicationException(onError(crsName, e));
             }
