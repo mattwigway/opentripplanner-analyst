@@ -100,7 +100,7 @@
 	</dependencyManagement>
 
 	<properties>
-		<opentripplanner.version>0.4.4-SNAPSHOT</opentripplanner.version>
+		<opentripplanner.version>0.4.4</opentripplanner.version>
 		<geotools.version>8.0-M4</geotools.version>
 		<spring.version>3.0.5.RELEASE</spring.version>
 		<jersey.version>1.11</jersey.version>
