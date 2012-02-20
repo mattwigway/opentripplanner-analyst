@@ -164,21 +164,6 @@ public abstract class Tile {
     }
 
 
-    public BufferedImage generateImageDifference (
-            ShortestPathTree spt1, 
-            ShortestPathTree spt2, 
-            RenderRequest renderRequest) {
-        return this.linearCombination(1, spt1, -1, spt2, 128, renderRequest);
-    }
-    
-    public BufferedImage generateImageHagerstrand (
-            ShortestPathTree spt1, 
-            ShortestPathTree spt2, 
-            long totalTimeSeconds,
-            RenderRequest renderRequest) {
-        return this.linearCombination(-1, spt1, -1, spt2, totalTimeSeconds/60, renderRequest);
-    }
-
     public GridCoverage2D getGridCoverage2D(BufferedImage image) {
         GridCoverage2D gridCoverage = new GridCoverageFactory()
             .create("isochrone", image, gg.getEnvelope2D());

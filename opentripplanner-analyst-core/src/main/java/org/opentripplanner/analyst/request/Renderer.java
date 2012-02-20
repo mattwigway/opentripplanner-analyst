@@ -10,6 +10,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
 import org.geotools.coverage.grid.GridCoverage2D;
+import org.geotools.coverage.grid.io.AbstractGridFormat;
+import org.geotools.gce.geotiff.GeoTiffFormat;
+import org.geotools.gce.geotiff.GeoTiffWriteParams;
+import org.geotools.gce.geotiff.GeoTiffWriter;
+import org.opengis.parameter.GeneralParameterValue;
+import org.opengis.parameter.ParameterValueGroup;
 import org.opentripplanner.analyst.core.Tile;
 import org.opentripplanner.analyst.rest.parameter.MIMEImageFormat;
 import org.opentripplanner.routing.spt.ShortestPathTree;
@@ -40,22 +46,26 @@ public class Renderer {
         BufferedImage image;
         switch (renderRequest.layer) {
         case DIFFERENCE :
-            image = tile.generateImageDifference(sptA, sptB, renderRequest);
+            image = tile.linearCombination(1, sptA, -1, sptB, 128, renderRequest);
             break;
         case HAGERSTRAND :
             long elapsed = Math.abs(sptRequestB.time - sptRequestA.time);
-            image = tile.generateImageHagerstrand(sptA, sptB, elapsed, renderRequest);
+            image = tile.linearCombination(-1, sptA, -1, sptB, elapsed/60, renderRequest);
             break;
         case TRAVELTIME :
         default :
             image = tile.generateImage(sptA, renderRequest);
         }
         
-        // TODO: geotiff from gridcoverage
-        //GridCoverage2D gc = tile.getGridCoverage2D(image);
-        return generateStreamingImageResponse(image, renderRequest.format);
+        // geotiff kludge
+        if (renderRequest.format.equals("image/geotiff")) {
+            GridCoverage2D gc = tile.getGridCoverage2D(image);
+            return generateStreamingGeotiffResponse(gc);
+        } else {
+            return generateStreamingImageResponse(image, renderRequest.format);
+        }
     }
-    
+        
     private static Response generateStreamingImageResponse(
             final BufferedImage image, final MIMEImageFormat format) {
         
@@ -82,6 +92,38 @@ public class Renderer {
        cc.setNoCache(false);
        return Response.ok(streamingOutput)
                        .type(format.toString())
+                       .cacheControl(cc)
+                       .build();
+    }
+    
+    
+    private static Response generateStreamingGeotiffResponse(final GridCoverage2D coverage) {
+        
+        StreamingOutput streamingOutput = new StreamingOutput() {
+            public void write(OutputStream outStream) {
+                try {
+                    LOG.debug("writing geotiff ");
+                    long t0 = System.currentTimeMillis();
+                    GeoTiffWriteParams wp = new GeoTiffWriteParams();
+                    wp.setCompressionMode(GeoTiffWriteParams.MODE_EXPLICIT);
+                    wp.setCompressionType("LZW");
+                    ParameterValueGroup params = new GeoTiffFormat().getWriteParameters();
+                    params.parameter(AbstractGridFormat.GEOTOOLS_WRITE_PARAMS.getName().toString()).setValue(wp);
+                    new GeoTiffWriter(outStream).write(coverage, (GeneralParameterValue[]) params.values().toArray(new GeneralParameterValue[1]));
+                    long t1 = System.currentTimeMillis();
+                    System.out.printf("%dmsec\n", (int)(t1-t0));
+                } catch (Exception e) {
+                    LOG.error("exception while preparing geotiff : {}", e.getMessage());
+                    throw new WebApplicationException(e);
+                }
+            }
+       };
+
+       CacheControl cc = new CacheControl();
+       cc.setMaxAge(3600);
+       cc.setNoCache(false);
+       return Response.ok(streamingOutput)
+                       .type("image/geotiff")
                        .cacheControl(cc)
                        .build();
     }
