@@ -11,7 +11,7 @@ public class MIMEImageFormat {
     public MIMEImageFormat(String s) {
         String[] parts = s.split("/");
         if (parts.length == 2 && parts[0].equals("image")) {
-            if (parts[1].equals("png") || parts[1].equals("gif") || parts[1].equals("jpeg")) {
+            if (parts[1].equals("png") || parts[1].equals("gif") || parts[1].equals("jpeg") || parts[1].equals("geotiff")) {
                 type = parts[1];
             } else {
                 throw new WebApplicationException(Response
