@@ -1,5 +1,6 @@
 package org.opentripplanner.analyst.request;
 
+import org.opentripplanner.analyst.core.DynamicTile;
 import org.opentripplanner.analyst.core.TemplateTile;
 import org.opentripplanner.analyst.core.Tile;
 import org.slf4j.Logger;
@@ -10,12 +11,14 @@ import org.springframework.stereotype.Component;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.cache.Weigher;
 
 @Component
-public class TileCache extends CacheLoader<TileRequest, Tile> { 
+public class TileCache extends CacheLoader<TileRequest, Tile> 
+    implements  Weigher<TileRequest, Tile> { 
     
     private static final Logger LOG = LoggerFactory.getLogger(TileCache.class);
-    
+
     @Autowired
     private SampleFactory sampleFactory;
     
@@ -25,7 +28,8 @@ public class TileCache extends CacheLoader<TileRequest, Tile> {
     private final LoadingCache<TileRequest, Tile> tileCache = CacheBuilder
             .newBuilder()
             .concurrencyLevel(16)
-            .softValues()
+            .maximumSize(200)
+            //.softValues()
             .build(this);
 
     @Override
@@ -39,5 +43,10 @@ public class TileCache extends CacheLoader<TileRequest, Tile> {
     public Tile get(TileRequest req) throws Exception {
         return tileCache.get(req);
     }
-        
+    
+    @Override
+    public int weigh(TileRequest req, Tile tile) {
+        return tile.getSamples().length;
+    }
+    
 }
