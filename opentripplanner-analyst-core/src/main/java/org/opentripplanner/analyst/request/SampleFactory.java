@@ -97,7 +97,7 @@ public class SampleFactory implements SampleSource {
         // WRONG: using unprojected coordinates
         double lengthRatio = beginning.getLength() / g.getLength();
         double distOnStreet = v.getLength() * lengthRatio;
-        double distToStreet = DistanceLibrary.distance(
+        double distToStreet = DistanceLibrary.fastDistance(
                 gl[0].getCoordinate(), 
                 gl[1].getCoordinate());
         double dist = distOnStreet + distToStreet;
