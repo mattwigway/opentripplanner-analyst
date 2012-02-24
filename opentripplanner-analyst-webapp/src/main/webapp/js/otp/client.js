@@ -13,7 +13,8 @@
 */
 
 var portland     = new L.LatLng(45.5191, -122.6745);
-var portlandEast = new L.LatLng(45.5191, -122.6600); 
+var sanfrancisco = new L.LatLng(37.7805, -122.419);
+var initLocation = sanfrancisco;
 
 var map = new L.Map('map', {
 	minZoom : 10,
@@ -35,19 +36,19 @@ var osmLayer = new L.TileLayer(arrayOSM[0], {maxZoom: 16, attribution: osmAttrib
 var aerAttrib = 'Map data &copy; 2011 OpenStreetMap contributors';
 var aerLayer = new L.TileLayer(arrayAerial[0], {maxZoom: 16, attribution: aerAttrib});
 
-var analyst = new L.TileLayer.WMS("http://localhost:8080/opentripplanner-analyst-core/wms", {
+var analyst = new L.TileLayer.WMS("/opentripplanner-analyst-core/wms", {
     layers: 'hagerstrand',
     styles: 'transparent',
     format: 'image/png',
     transparent: true,
     time:      "2011-12-06T08:00:00Z",
-    DIM_TIMEB: "2011-12-06T09:30:00Z",
+    DIM_TIMEB: "2011-12-06T10:00:00Z",
     attribution: osmAttrib,
     maxZoom: 16
 });
 
 var analystTile = new L.TileLayer(
-	"http://localhost:8080/opentripplanner-analyst-core/tile/{z}/{x}/{y}.png?time=2011-12-06T08:00:00Z&lon=-122.6745&lat=45.5191", 
+	"/opentripplanner-analyst-core/tile/{z}/{x}/{y}.png?time=2011-12-06T08:00:00Z&lon=-122.6745&lat=45.5191", 
 	{ attribution: osmAttrib }
 );
 
@@ -74,8 +75,8 @@ var overlayMaps = {
 
 	        
 
-var origMarker = new L.Marker(portland, {draggable: true});
-var destMarker = new L.Marker(portlandEast, {draggable: true});
+var origMarker = new L.Marker(initLocation, {draggable: true});
+var destMarker = new L.Marker(initLocation, {draggable: true});
 //marker.bindPopup("I am marker.");
 origMarker.on('dragend', refresh);
 destMarker.on('dragend', refresh);
@@ -84,7 +85,7 @@ map.addLayer(aerLayer);
 map.addLayer(analyst);
 map.addLayer(origMarker);
 map.addLayer(destMarker);
-map.setView(portland, 13);
+map.setView(initLocation, 13);
 
 var layersControl = new L.Control.Layers(baseMaps, overlayMaps);
 map.addControl(layersControl);
