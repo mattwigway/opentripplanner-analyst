@@ -47,26 +47,27 @@ public class WebMapService {
            @QueryParam("request") @DefaultValue("GetMap")        String request,
            @QueryParam("layers")  @DefaultValue("traveltime")    LayerList layers, 
            @QueryParam("styles")  @DefaultValue("gray")          StyleList styles,
-           // called CRS in 1.3.0
+           // SRS is called CRS in 1.3.0
            @QueryParam("srs")     @DefaultValue("EPSG:4326")     CoordinateReferenceSystem srs,
+           @QueryParam("crs")     CoordinateReferenceSystem crs,
            @QueryParam("bbox")    Envelope2D bbox, 
-           @QueryParam("width")   int width, 
-           @QueryParam("height")  int height, 
+           @QueryParam("width")   @DefaultValue("256")           int width, 
+           @QueryParam("height")  @DefaultValue("256")           int height, 
            @QueryParam("format")  @DefaultValue("image/geotiff") MIMEImageFormat format,
            // Optional parameters
-           @QueryParam("transparent") @DefaultValue("false") Boolean transparent,
-           @QueryParam("bgcolor") @DefaultValue("0xFFFFFF") String bgcolor,
-           @QueryParam("exceptions") @DefaultValue("XML") String exceptions,
+           @QueryParam("transparent") @DefaultValue("false")     Boolean transparent,
+           @QueryParam("bgcolor")     @DefaultValue("0xFFFFFF")  String bgcolor,
+           @QueryParam("exceptions")  @DefaultValue("XML")       String exceptions,
            @QueryParam("time") GregorianCalendar time, 
-           @QueryParam("elevation") @DefaultValue("0") Float elevation, 
+           @QueryParam("elevation")   @DefaultValue("0")         Float elevation, 
            // Sample dimensions
-           @QueryParam("DIM_ORIGINLON") Float originLon, 
-           @QueryParam("DIM_ORIGINLAT") Float originLat,
-           @QueryParam("DIM_TIMEB") GregorianCalendar timeB,
+           @QueryParam("DIM_ORIGINLON")  Float originLon, 
+           @QueryParam("DIM_ORIGINLAT")  Float originLat,
+           @QueryParam("DIM_TIMEB")      GregorianCalendar timeB,
            @QueryParam("DIM_ORIGINLONB") Float originLonB, 
            @QueryParam("DIM_ORIGINLATB") Float originLatB,
            // non-WMS parameters
-           @QueryParam("resolution") Double resolution,
+           @QueryParam("resolution")     Double resolution,
            
            @Context UriInfo uriInfo ) throws Exception { 
         
@@ -78,6 +79,9 @@ public class WebMapService {
             height = (int) Math.ceil(bbox.height / resolution);
         }
 
+        if (version == new WMSVersion("1.3.0"))
+            srs = crs;
+
         LOG.debug("params {}", uriInfo.getQueryParameters());
         LOG.debug("layers = {}", layers);
         LOG.debug("styles = {}", styles);
@@ -85,16 +89,20 @@ public class WebMapService {
         LOG.debug("srs = {}", srs.getName());
         LOG.debug("bbox = {}", bbox);
         LOG.debug("search time = {}", time);
-        if (originLat == null || originLon == null) {
+        
+        SPTRequest sptRequestA, sptRequestB = null;
+        if (originLat == null && originLon == null) {
             LOG.warn("no origin (sample dimension) specified.");
             return Response.noContent().build();
         }
+        sptRequestA = new SPTRequest(originLon, originLat, time.getTimeInMillis()/1000);
 
+        if (originLatB != null && originLonB != null) {
+            sptRequestB = new SPTRequest(originLonB, originLatB, timeB.getTimeInMillis()/1000);
+        } 
+        
         bbox.setCoordinateReferenceSystem(srs);
         TileRequest tileRequest = new TileRequest(bbox, width, height);
-        SPTRequest  sptRequestA = new SPTRequest(originLon, originLat, time.getTimeInMillis()/1000);
-        SPTRequest  sptRequestB = new SPTRequest(originLonB, originLatB, timeB.getTimeInMillis()/1000);
-        
         Layer layer = layers.get(0);
         Style style = styles.get(0);
         RenderRequest renderRequest = new RenderRequest(format, layer, style, transparent);
