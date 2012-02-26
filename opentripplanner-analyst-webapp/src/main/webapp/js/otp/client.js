@@ -16,7 +16,7 @@ var portland     = new L.LatLng(45.5191, -122.6745);
 var ottawa       = new L.LatLng(45.41311, -75.63806);
 var sanfrancisco = new L.LatLng(37.7805, -122.419);
 
-var initLocation = portland;
+var initLocation = sanfrancisco;
 
 var map = new L.Map('map', {
 	minZoom : 10,
@@ -105,19 +105,49 @@ var downloadTool = function () {
     };
 
     // TODO: this bounding box needs to be reprojected!
-    var bbox = map.getBounds().toBBoxString();
-    
-    var url = '/opentripplanner-analyst-core/wms?layers=' + params.layers +
-        '&format=' + params.format + 
-        '&srs=' + params.srs +
-        '&resolution=' + params.resolution +
-        '&bbox=' + bbox +
-        '&DIM_ORIGINLAT=' + analyst.wmsParams.DIM_ORIGINLAT +
-        '&DIM_ORIGINLON=' + analyst.wmsParams.DIM_ORIGINLON +
-        '&time=' + analyst.wmsParams.time +
-        '&DIM_ORIGINLATB=' + analyst.wmsParams.DIM_ORIGINLATB + 
-        '&DIM_ORIGINLONB=' + analyst.wmsParams.DIM_ORIGINLONB +
-        '&DIM_TIMEB=' + analyst.wmsParams.DIM_TIMEB;
+    var bounds = map.getBounds();
+    var bbox;
 
-    window.open(url);
+    // reproject
+    var src = new Proj4js.Proj('EPSG:4326');
+    // TODO: undefined srs?
+    var dest = new Proj4js.Proj(params.srs);
+
+    // wait until ready then execute
+    var interval;
+    interval = setInterval(function () {
+        // if not ready, wait for next iteration
+        if (!(src.readyToUse && dest.readyToUse))
+            return;
+
+        // clear the interval so this function is not called back.
+        clearInterval(interval);
+
+        var swll = bounds.getSouthWest();
+        var nell = bounds.getNorthEast();
+        
+        var sw = new Proj4js.Point(swll.lng, swll.lat);
+        var ne = new Proj4js.Point(nell.lng, nell.lat);
+
+        Proj4js.transform(src, dest, sw);
+        Proj4js.transform(src, dest, ne);
+
+        // left, bot, right, top
+        bbox = [sw.x, sw.y, ne.x, ne.y].join(',');
+
+
+        var url = '/opentripplanner-analyst-core/wms?layers=' + params.layers +
+            '&format=' + params.format + 
+            '&srs=' + params.srs +
+            '&resolution=' + params.resolution +
+            '&bbox=' + bbox +
+            '&DIM_ORIGINLAT=' + analyst.wmsParams.DIM_ORIGINLAT +
+            '&DIM_ORIGINLON=' + analyst.wmsParams.DIM_ORIGINLON +
+            '&time=' + analyst.wmsParams.time +
+            '&DIM_ORIGINLATB=' + analyst.wmsParams.DIM_ORIGINLATB + 
+            '&DIM_ORIGINLONB=' + analyst.wmsParams.DIM_ORIGINLONB +
+            '&DIM_TIMEB=' + analyst.wmsParams.DIM_TIMEB;
+
+        window.open(url);
+    }, 1000); // this is the end of setInterval, run every 1s
 };
