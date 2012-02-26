@@ -40,7 +40,7 @@ public class WebMapService {
     @InjectParam
     private Renderer renderer;
     
-    @GET @Produces("image/*, text/xml")
+    @GET @Produces("image/*, text/*")
     public Response wmsGet(
            // Mandatory parameters
            @QueryParam("version") @DefaultValue("1.1.1")         WMSVersion version,
