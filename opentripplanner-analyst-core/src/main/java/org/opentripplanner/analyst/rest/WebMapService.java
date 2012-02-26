@@ -53,7 +53,7 @@ public class WebMapService {
            @QueryParam("bbox")    Envelope2D bbox, 
            @QueryParam("width")   @DefaultValue("256")           int width, 
            @QueryParam("height")  @DefaultValue("256")           int height, 
-           @QueryParam("format")  @DefaultValue("image/geotiff") MIMEImageFormat format,
+           @QueryParam("format")  @DefaultValue("image/png")     MIMEImageFormat format,
            // Optional parameters
            @QueryParam("transparent") @DefaultValue("false")     Boolean transparent,
            @QueryParam("bgcolor")     @DefaultValue("0xFFFFFF")  String bgcolor,
