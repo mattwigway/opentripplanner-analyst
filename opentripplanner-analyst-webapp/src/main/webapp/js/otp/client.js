@@ -43,8 +43,8 @@ var analyst = new L.TileLayer.WMS("/opentripplanner-analyst-core/wms", {
     styles: 'transparent',
     format: 'image/png',
     transparent: true,
-    time:      "2012-02-30T08:00:00Z",
-    DIM_TIMEB: "2012-02-30T10:00:00Z",
+    time:      "2012-03-01T08:00:00Z",
+    DIM_TIMEB: "2012-03-01T10:00:00Z",
     attribution: osmAttrib,
     maxZoom: 16
 });
