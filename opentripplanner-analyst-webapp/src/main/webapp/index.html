@@ -10,6 +10,35 @@
 	<center>
 		<div id="map" style="width:1000px; height: 750px"></div>
 	</center>
+    <span>
+      <span id="toolbox">
+        <div class="tool">
+          <h4>Download Image Tool</h4>
+          <form onsubmit="downloadTool(); return false;">
+            <label for="downloadFormat">Image Format:</label>
+            <select id="downloadFormat">
+              <option value="image/geotiff">GeoTIFF</option>
+              <option value="image/png">PNG</option>
+              <option value="image/jpeg">JPEG</option>
+            </select>
+            
+            <label for="downloadProj">Projection:</label>
+            <input type="text" id="downloadProj" value="EPSG:4326" />
+            
+            <label for="downloadLayer">Layer:</label>
+            <select id="downloadLayer">
+              <option value="traveltime">Travel Time</option>
+              <option value="hagerstrand">Hägerstrand</option>
+            </select>
+
+            <label for="downloadResolution">Resolution (SRS units):</label>
+            <input type="text" id="downloadResolution" />
+
+            <input type="submit" />
+          </form>
+        </div>
+      </span>
+    </span>            
     <script type="text/javascript"  src="js/otp/client.js"></script>
 </body>
 

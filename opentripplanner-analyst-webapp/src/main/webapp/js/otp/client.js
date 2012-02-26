@@ -91,3 +91,31 @@ var layersControl = new L.Control.Layers(baseMaps, overlayMaps);
 map.addControl(layersControl);
 
 refresh();
+
+
+// tools
+var downloadTool = function () { 
+    var params = {
+        format: document.getElementById('downloadFormat').value,
+        srs: document.getElementById('downloadProj').value,
+        layers: document.getElementById('downloadLayer').value,
+        resolution: document.getElementById('downloadResolution').value
+    };
+
+    // TODO: this bounding box needs to be reprojected!
+    var bbox = map.getBounds().toBBoxString();
+    
+    var url = '/opentripplanner-analyst-core/wms?layers=' + params.layers +
+        '&format=' + params.format + 
+        '&srs=' + params.srs +
+        '&resolution=' + params.resolution +
+        '&bbox=' + bbox +
+        '&DIM_ORIGINLAT=' + analyst.wmsParams.DIM_ORIGINLAT +
+        '&DIM_ORIGINLON=' + analyst.wmsParams.DIM_ORIGINLON +
+        '&time=' + analyst.wmsParams.time +
+        '&DIM_ORIGINLATB=' + analyst.wmsParams.DIM_ORIGINLATB + 
+        '&DIM_ORIGINLONB=' + analyst.wmsParams.DIM_ORIGINLONB +
+        '&DIM_TIMEB=' + analyst.wmsParams.DIM_TIMEB;
+
+    window.open(url);
+};
