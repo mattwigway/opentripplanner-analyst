@@ -79,7 +79,7 @@ public class WebMapService {
             height = (int) Math.ceil(bbox.height / resolution);
         }
 
-        if (version == new WMSVersion("1.3.0"))
+        if (version == new WMSVersion("1.3.0") && crs != null)
             srs = crs;
 
         LOG.debug("params {}", uriInfo.getQueryParameters());

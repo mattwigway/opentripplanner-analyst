@@ -13,8 +13,10 @@
 */
 
 var portland     = new L.LatLng(45.5191, -122.6745);
+var ottawa       = new L.LatLng(45.41311, -75.63806);
 var sanfrancisco = new L.LatLng(37.7805, -122.419);
-var initLocation = sanfrancisco;
+
+var initLocation = portland;
 
 var map = new L.Map('map', {
 	minZoom : 10,
@@ -41,8 +43,8 @@ var analyst = new L.TileLayer.WMS("/opentripplanner-analyst-core/wms", {
     styles: 'transparent',
     format: 'image/png',
     transparent: true,
-    time:      "2011-12-06T08:00:00Z",
-    DIM_TIMEB: "2011-12-06T10:00:00Z",
+    time:      "2012-02-30T08:00:00Z",
+    DIM_TIMEB: "2012-02-30T10:00:00Z",
     attribution: osmAttrib,
     maxZoom: 16
 });
