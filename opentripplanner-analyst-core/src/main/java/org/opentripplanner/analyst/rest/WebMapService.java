@@ -43,16 +43,16 @@ public class WebMapService {
     @GET @Produces("image/*, text/xml")
     public Response wmsGet(
            // Mandatory parameters
-           @QueryParam("version") WMSVersion version,
-           @QueryParam("request") String request,
-           @QueryParam("layers")  LayerList layers, 
-           @QueryParam("styles")  StyleList styles,
+           @QueryParam("version") @DefaultValue("1.1.1")         WMSVersion version,
+           @QueryParam("request") @DefaultValue("GetMap")        String request,
+           @QueryParam("layers")  @DefaultValue("traveltime")    LayerList layers, 
+           @QueryParam("styles")  @DefaultValue("gray")          StyleList styles,
            // called CRS in 1.3.0
-           @QueryParam("srs")     CoordinateReferenceSystem srs,
+           @QueryParam("srs")     @DefaultValue("EPSG:4326")     CoordinateReferenceSystem srs,
            @QueryParam("bbox")    Envelope2D bbox, 
            @QueryParam("width")   int width, 
            @QueryParam("height")  int height, 
-           @QueryParam("format")  MIMEImageFormat format,
+           @QueryParam("format")  @DefaultValue("image/geotiff") MIMEImageFormat format,
            // Optional parameters
            @QueryParam("transparent") @DefaultValue("false") Boolean transparent,
            @QueryParam("bgcolor") @DefaultValue("0xFFFFFF") String bgcolor,
@@ -65,11 +65,19 @@ public class WebMapService {
            @QueryParam("DIM_TIMEB") GregorianCalendar timeB,
            @QueryParam("DIM_ORIGINLONB") Float originLonB, 
            @QueryParam("DIM_ORIGINLATB") Float originLatB,
+           // non-WMS parameters
+           @QueryParam("resolution") Double resolution,
+           
            @Context UriInfo uriInfo ) throws Exception { 
         
         if (request.equals("getCapabilities")) 
             return getCapabilitiesResponse();
-                    
+            
+        if (resolution != null) {
+            width  = (int) Math.ceil(bbox.width  / resolution);
+            height = (int) Math.ceil(bbox.height / resolution);
+        }
+
         LOG.debug("params {}", uriInfo.getQueryParameters());
         LOG.debug("layers = {}", layers);
         LOG.debug("styles = {}", styles);
