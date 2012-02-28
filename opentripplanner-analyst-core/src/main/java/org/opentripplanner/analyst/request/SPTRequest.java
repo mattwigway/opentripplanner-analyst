@@ -8,8 +8,13 @@ public class SPTRequest {
     public final double lat;
     public final long time;
 
-    public SPTRequest(double lon, double lat, GregorianCalendar time) {
-        this(lon, lat, time.getTimeInMillis() / 1000);
+    public SPTRequest(double lon, double lat, GregorianCalendar gcal) {
+        this.lon = lon;
+        this.lat = lat;
+        if (gcal != null)
+            this.time = gcal.getTimeInMillis() / 1000;
+        else 
+            this.time = System.currentTimeMillis() / 1000;
     }
 
     public SPTRequest(double lon, double lat, long time) {

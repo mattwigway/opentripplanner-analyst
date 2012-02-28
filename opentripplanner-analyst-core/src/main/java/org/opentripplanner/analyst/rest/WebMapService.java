@@ -95,10 +95,10 @@ public class WebMapService {
             LOG.warn("no origin (sample dimension) specified.");
             return Response.noContent().build();
         }
-        sptRequestA = new SPTRequest(originLon, originLat, time.getTimeInMillis()/1000);
+        sptRequestA = new SPTRequest(originLon, originLat, time);
 
         if (originLatB != null && originLonB != null) {
-            sptRequestB = new SPTRequest(originLonB, originLatB, timeB.getTimeInMillis()/1000);
+            sptRequestB = new SPTRequest(originLonB, originLatB, timeB);
         } 
         
         bbox.setCoordinateReferenceSystem(srs);
