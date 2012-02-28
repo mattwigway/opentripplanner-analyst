@@ -35,16 +35,21 @@ var arrayAerial = ["http://oatile1.mqcdn.com/naip/{z}/{x}/{y}.png",
 var osmAttrib = 'Map data &copy; 2011 OpenStreetMap contributors';
 var osmLayer = new L.TileLayer(arrayOSM[0], {maxZoom: 16, attribution: osmAttrib});
 
+// store flags for various things, to avoid polluting global namespace
+var flags = {
+    isTwoOrigin: true,
+    layer: 'hagerstrand',
+    origTime: '2012-03-01T08:00:00Z',
+    destTime: '2012-03-01T10:00:00Z'
+};
+
 var aerAttrib = 'Map data &copy; 2011 OpenStreetMap contributors';
 var aerLayer = new L.TileLayer(arrayAerial[0], {maxZoom: 16, attribution: aerAttrib});
 
 var analyst = new L.TileLayer.WMS("/opentripplanner-analyst-core/wms", {
-    layers: 'hagerstrand',
     styles: 'transparent',
     format: 'image/png',
     transparent: true,
-    time:      "2012-03-01T08:00:00Z",
-    DIM_TIMEB: "2012-03-01T10:00:00Z",
     attribution: osmAttrib,
     maxZoom: 16
 });
@@ -60,8 +65,12 @@ var refresh = function () {
 	map.removeLayer(analyst);
     analyst.wmsParams.DIM_ORIGINLAT  = o.lat;
     analyst.wmsParams.DIM_ORIGINLON  = o.lng;
+    analyst.wmsParams.time = flags.origTime;
     analyst.wmsParams.DIM_ORIGINLATB = d.lat;
     analyst.wmsParams.DIM_ORIGINLONB = d.lng;
+    analyst.wmsParams.DIM_TIMEB = flags.destTime;
+    analyst.wmsParams.layers = flags.layer;
+
     map.addLayer(analyst);
 };
 
@@ -96,6 +105,31 @@ refresh();
 
 
 // tools
+var mapSetupTool = function () {
+    var o = document.getElementById('setupOrigTime').value;
+    if (o != '')
+        flags.origTime = o;
+
+    var d = document.getElementById('setupDestTime').value;
+    if (d != '')
+        flags.destTime = d;
+
+    var l = document.getElementById('setupLayer').value;
+    // if we switch from Hägerstrand to Travel Time, remove dest marker
+    if (flags.layer != l && l == 'traveltime') {
+            map.removeLayer(destMarker);
+    }
+    // and vice-versa
+    else if (flags.layer != l && l == 'hagerstrand') {
+        map.addLayer(destMarker);
+    }
+
+    flags.layer = l;
+
+    refresh();
+    return false;
+}       
+
 var downloadTool = function () { 
     var params = {
         format: document.getElementById('downloadFormat').value,
@@ -134,7 +168,6 @@ var downloadTool = function () {
 
         // left, bot, right, top
         bbox = [sw.x, sw.y, ne.x, ne.y].join(',');
-
 
         var url = '/opentripplanner-analyst-core/wms?layers=' + params.layers +
             '&format=' + params.format + 
