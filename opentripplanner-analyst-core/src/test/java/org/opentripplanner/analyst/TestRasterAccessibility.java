@@ -1,3 +1,5 @@
+package org.opentripplanner.analyst;
+
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
@@ -6,6 +8,7 @@ import javax.imageio.ImageIO;
 import junit.framework.TestCase;
 
 import org.junit.Before;
+import org.junit.Test;
 import org.opentripplanner.routing.algorithm.strategies.SkipTraverseResultStrategy;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.core.State;
@@ -45,6 +48,11 @@ public class TestRasterAccessibility extends TestCase {
         options.setMaxWalkDistance(3000);
         options.setTransferTable(graph.getTransferTable());
         options.worstTime = tripTime + 60 * 150; // we don't display over 150 min
+    }
+    
+    @Test
+    public void testNothing() {
+        
     }
     
     private void saveImage(RenderedImage image, String format, int i) 

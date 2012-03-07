@@ -15,7 +15,7 @@
 	</bean>
 
 	<bean id="graphBundle" class="org.opentripplanner.model.GraphBundle">
-		<property name="path" value="/home/syncopate/otp_data/pdx/" />
+		<property name="path" value="/home/syncopate/otp_data/sfo/" />
 	</bean>
 
 	<context:component-scan base-package="org.opentripplanner.analyst"/>

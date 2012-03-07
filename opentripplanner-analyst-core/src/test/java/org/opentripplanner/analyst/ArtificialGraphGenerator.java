@@ -1,3 +1,5 @@
+package org.opentripplanner.analyst;
+
 import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
@@ -8,7 +10,6 @@ import org.opentripplanner.routing.vertextype.TurnVertex;
 import org.opentripplanner.routing.edgetype.TurnEdge;
 
 import com.vividsolutions.jts.geom.LineString;
-
 
 public class ArtificialGraphGenerator {
 
