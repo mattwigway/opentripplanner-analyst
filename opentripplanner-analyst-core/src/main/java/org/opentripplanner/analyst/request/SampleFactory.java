@@ -6,7 +6,7 @@ import org.opentripplanner.analyst.core.GeometryIndex;
 import org.opentripplanner.analyst.core.Sample;
 import org.opentripplanner.analyst.core.SampleSource;
 import org.opentripplanner.routing.vertextype.TurnVertex;
-import org.opentripplanner.routing.impl.DistanceLibrary;
+import org.opentripplanner.common.geometry.DistanceLibrary;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
