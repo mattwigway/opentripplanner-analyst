@@ -40,8 +40,6 @@ public class SPTCache extends CacheLoader<SPTRequest, ShortestPathTree> {
     /** completes the abstract CacheLoader superclass */
     public ShortestPathTree load(SPTRequest req) throws Exception {
         LOG.debug("spt cache miss : {}", req);
-        LOG.debug("graph: {}, graph vertices: {}", graphService.getGraph(), 
-                  graphService.getGraph().getVertices().size());
         // use the shared OTP code
         //Vertex origin = index.getNearestPedestrianStreetVertex(req.lon, req.lat);
         Coordinate origCoord = new Coordinate(req.lon, req.lat);
