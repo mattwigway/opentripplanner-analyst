@@ -1,9 +1,10 @@
 package org.opentripplanner.analyst.request;
 
-import org.opentripplanner.analyst.core.GeometryIndexService;
+import org.opentripplanner.routing.impl.StreetVertexIndexServiceImpl;
 import org.opentripplanner.routing.algorithm.GenericDijkstra;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.TraverseOptions;
+import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.services.GraphService;
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.vividsolutions.jts.geom.Coordinate;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -26,7 +28,7 @@ public class SPTCache extends CacheLoader<SPTRequest, ShortestPathTree> {
     private GraphService graphService;
 
     @Autowired
-    private GeometryIndexService index;
+    private StreetVertexIndexServiceImpl index;
 
     private LoadingCache<SPTRequest, ShortestPathTree> sptCache = CacheBuilder
             .newBuilder()
@@ -38,7 +40,19 @@ public class SPTCache extends CacheLoader<SPTRequest, ShortestPathTree> {
     /** completes the abstract CacheLoader superclass */
     public ShortestPathTree load(SPTRequest req) throws Exception {
         LOG.debug("spt cache miss : {}", req);
-        Vertex origin = index.getNearestPedestrianStreetVertex(req.lon, req.lat);
+        LOG.debug("graph: {}, graph vertices: {}", graphService.getGraph(), 
+                  graphService.getGraph().getVertices().size());
+        // use the shared OTP code
+        //Vertex origin = index.getNearestPedestrianStreetVertex(req.lon, req.lat);
+        Coordinate origCoord = new Coordinate(req.lon, req.lat);
+
+        // Prevent transit stops from being used by requesting PEDESTRIAN
+        // TODO: this is the way it was before, is this necessarily desirable?
+        TraverseOptions traverseOptsForSnap = new TraverseOptions(TraverseMode.WALK);
+
+        // name is null, don't care
+        Vertex origin = index.getClosestVertex(origCoord, null, traverseOptsForSnap);
+
         TraverseOptions options = getOptions(origin, req.time);
         State initialState = new State(req.time, origin, options);
         LOG.debug("initial state: {}", initialState);
