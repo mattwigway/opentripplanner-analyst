@@ -32,6 +32,7 @@ public class GeometryIndex implements GeometryIndexService {
     private static final Logger LOG = LoggerFactory.getLogger(GeometryIndex.class);
     private static final double SEARCH_RADIUS_M = 100; // meters
     private static final double SEARCH_RADIUS_DEG = DistanceLibrary.metersToDegrees(SEARCH_RADIUS_M);
+    private static final int    MAX_EXPANSIONS = 100;
     
     private GeometryFactory geometryFactory = new GeometryFactory();
     private STRtree pedestrianIndex;
@@ -74,12 +75,19 @@ public class GeometryIndex implements GeometryIndexService {
         TurnVertex closestVertex = null;
         double bestDistance = Double.MAX_VALUE;
 
-        // query
+        // expanding query, start at -1 since the first iteration doesn't count
+        int expansionIndex = -1;
         Envelope env = new Envelope(c);
-        env.expandBy(SEARCH_RADIUS_DEG, SEARCH_RADIUS_DEG);
-        @SuppressWarnings("unchecked")
-        List<TurnVertex> vs = (List<TurnVertex>) pedestrianIndex.query(env);
-        // query always returns a (possibly empty) list, but never null
+        List<TurnVertex> vs;
+        do {
+            env.expandBy(SEARCH_RADIUS_DEG, SEARCH_RADIUS_DEG);
+            //@SuppressWarnings("unchecked")
+            vs = ((List<TurnVertex>) pedestrianIndex.query(env));
+            expansionIndex++;
+            // query always returns a (possibly empty) list, but never null
+        } while (vs.size() == 0 && expansionIndex < MAX_EXPANSIONS);
+
+        LOG.debug("Expanded envelope {} times", expansionIndex);
 
         // find two closest among nearby geometries
         for (TurnVertex v : vs) {
