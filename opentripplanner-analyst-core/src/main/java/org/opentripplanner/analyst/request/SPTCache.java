@@ -39,6 +39,10 @@ public class SPTCache extends CacheLoader<SPTRequest, ShortestPathTree> {
     public ShortestPathTree load(SPTRequest req) throws Exception {
         LOG.debug("spt cache miss : {}", req);
         Vertex origin = index.getNearestPedestrianStreetVertex(req.lon, req.lat);
+
+        if (origin == null)
+            LOG.debug("Nearest pedestrian vertex is null! This is probably not what you intended.");
+
         TraverseOptions options = getOptions(origin, req.time);
         State initialState = new State(req.time, origin, options);
         LOG.debug("initial state: {}", initialState);
