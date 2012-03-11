@@ -78,10 +78,10 @@ public class GeometryIndex implements GeometryIndexService {
         // expanding query, start at -1 since the first iteration doesn't count
         int expansionIndex = -1;
         Envelope env = new Envelope(c);
+        @SuppressWarnings("unchecked")
         List<TurnVertex> vs;
         do {
             env.expandBy(SEARCH_RADIUS_DEG, SEARCH_RADIUS_DEG);
-            //@SuppressWarnings("unchecked")
             vs = ((List<TurnVertex>) pedestrianIndex.query(env));
             expansionIndex++;
             // query always returns a (possibly empty) list, but never null
