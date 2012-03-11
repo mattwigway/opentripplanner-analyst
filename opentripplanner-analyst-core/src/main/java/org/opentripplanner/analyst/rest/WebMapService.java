@@ -89,6 +89,9 @@ public class WebMapService {
         LOG.debug("srs = {}", srs.getName());
         LOG.debug("bbox = {}", bbox);
         LOG.debug("search time = {}", time);
+
+        Layer layer = layers.get(0);
+        Style style = styles.get(0);
         
         SPTRequest sptRequestA, sptRequestB = null;
         if (originLat == null && originLon == null) {
@@ -97,14 +100,13 @@ public class WebMapService {
         }
         sptRequestA = new SPTRequest(originLon, originLat, time);
 
-        if (originLatB != null && originLonB != null) {
+        // ignore lat/lonB in Traveltime
+        if (originLatB != null && originLonB != null && layer != Layer.TRAVELTIME) {
             sptRequestB = new SPTRequest(originLonB, originLatB, timeB);
         } 
         
         bbox.setCoordinateReferenceSystem(srs);
         TileRequest tileRequest = new TileRequest(bbox, width, height);
-        Layer layer = layers.get(0);
-        Style style = styles.get(0);
         RenderRequest renderRequest = new RenderRequest(format, layer, style, transparent);
         return renderer.getResponse(tileRequest, sptRequestA, sptRequestB, renderRequest);
     }
